@@ -5,9 +5,9 @@ package com.shorrockin.cascal.model
  * a collection of columns, or a super key, which contains a collection of
  * standard keys.
  */
-abstract case class Key() extends ColumnContainer {
-  val family:ColumnFamily
-  val keyspace = family.keyspace
+trait Key[ColumnType] extends StringValue with ColumnContainer[ColumnType] {
   val value:String
+
+  val keyspace = family.keyspace
   val key = this
 }

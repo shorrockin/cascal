@@ -7,6 +7,6 @@ package com.shorrockin.cascal.model
  *
  * @author Chris Shorrock
  */
-case class StandardKey(val value:String, val family:StandardColumnFamily) extends Key {
+case class StandardKey(val value:String, val family:StandardColumnFamily) extends Key[StandardColumn[StandardKey]] {
   def \(value:Array[Byte]) = new StandardColumn[StandardKey](value, this)
 }

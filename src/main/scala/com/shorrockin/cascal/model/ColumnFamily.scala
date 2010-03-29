@@ -5,9 +5,7 @@ package com.shorrockin.cascal.model
  * level dimension of the cassandra data model. Calumn families can either
  * be Standard or Super.
  */
-abstract class ColumnFamily() {
-  val value:String
+trait ColumnFamily[KeyType] extends StringValue {
   val keyspace:Keyspace
-  
-  def \(value:String):Key
+  def \(value:String):KeyType
 }

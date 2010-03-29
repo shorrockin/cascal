@@ -11,7 +11,7 @@ package com.shorrockin.cascal.model
  *
  * @author Chris Shorrock
  */
-case class Keyspace(val value:String) {
+case class Keyspace(val value:String) extends StringValue {
   def \(value:String):StandardColumnFamily = new StandardColumnFamily(value, this)
   def \\(value:String):SuperColumnFamily = new SuperColumnFamily(value, this)
 }

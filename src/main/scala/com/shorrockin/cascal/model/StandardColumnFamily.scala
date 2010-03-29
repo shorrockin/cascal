@@ -6,6 +6,6 @@ package com.shorrockin.cascal.model
  *
  * @author Chris Shorrock
  */
-case class StandardColumnFamily(val value:String, val keyspace:Keyspace) extends ColumnFamily {
+case class StandardColumnFamily(val value:String, val keyspace:Keyspace) extends ColumnFamily[StandardKey] {
   def \(value:String) = new StandardKey(value, this)
 }

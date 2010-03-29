@@ -1,17 +1,17 @@
 package com.shorrockin.cascal
 
-import org.apache.cassandra.service.ConsistencyLevel
+import org.apache.cassandra.thrift.ConsistencyLevel
 
 /**
  * object containing all the types of consistencies support by cassandra
  */
 object Consistency {
-  val Zero = new Consistency { def intValue = ConsistencyLevel.ZERO }
-  val One = new Consistency { def intValue = ConsistencyLevel.ONE }
-  val Quorum = new Consistency { def intValue = ConsistencyLevel.QUORUM }
-  val DcQuorum = new Consistency { def intValue = ConsistencyLevel.DCQUORUM }
-  def DcQuorumSync = new Consistency { def intValue = ConsistencyLevel.DCQUORUMSYNC }
-  def All = new Consistency { def intValue = ConsistencyLevel.ALL }
+  val Zero = new Consistency { def thriftValue = ConsistencyLevel.ZERO }
+  val One = new Consistency { def thriftValue = ConsistencyLevel.ONE }
+  val Quorum = new Consistency { def thriftValue = ConsistencyLevel.QUORUM }
+  val DcQuorum = new Consistency { def thriftValue = ConsistencyLevel.DCQUORUM }
+  def DcQuorumSync = new Consistency { def thriftValue = ConsistencyLevel.DCQUORUMSYNC }
+  def All = new Consistency { def thriftValue = ConsistencyLevel.ALL }
 }
 
 
@@ -20,5 +20,5 @@ object Consistency {
  * cassandra.
  */
 trait Consistency {
-  def intValue:Int
+  def thriftValue:ConsistencyLevel
 }
