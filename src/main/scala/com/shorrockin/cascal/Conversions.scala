@@ -3,13 +3,13 @@ package com.shorrockin.cascal
 import model.Keyspace
 import java.nio.charset.Charset
 import java.util.{UUID => JavaUUID}
+import collection.jcl.BufferWrapper
 
 /**
  * some implicits to assist with common conversions
  */
 object Conversions {
   val utf8 = Charset.forName("UTF-8")
-  val emptyBytes = new Array[Byte](0)
 
   implicit def bytes(str:String) = str.getBytes(utf8)
 
@@ -29,4 +29,6 @@ object Conversions {
 
     buffer
   }
+
+  implicit def toJavaList[T](l: Seq[T]):java.util.List[T] = l.foldLeft(new java.util.ArrayList[T](l.size)){(al, e) => al.add(e); al}
 }

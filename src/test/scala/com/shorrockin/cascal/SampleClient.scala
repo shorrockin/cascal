@@ -4,6 +4,7 @@ import model.{StringValue, ByteValue, ColumnValue}
 
 object SampleClient {
   import Conversions._
+  import collection.jcl.Conversions._
 
   def log(str:String, args:String*) = System.out.println(str.format(args:_*))
   def now = System.currentTimeMillis
@@ -15,7 +16,13 @@ object SampleClient {
     val session = new Session("shorrockin.com", 9160, Consistency.One)
 
     try {
+      log("[%s] Cluster Name: %s", now, session.clusterName)
+      log("[%s] Version: %s", now, session.version)
+      log("[%s] Keyspaces: %s", now, session.keyspaces.mkString("", ",", ""))
+      // log("[%s] Config File: %s", now, session.configFile)
+      log("---------------------------------------------------")
       testStandard(session)
+      log("---------------------------------------------------")
       testSuper(session)
     } finally {
       session.close()
@@ -33,22 +40,21 @@ object SampleClient {
     session.insert(value2)
     session.insert(value3)
 
-    val result   = session.get(value1.name)
-//    val count    = session.count(key)
+    log("[%s] result1 value: %s", now, session.get(value1.name))
+    log("[%s] result2 value: %s", now, session.get(value2.name))
+    log("[%s] number of columns in key: %s", now, session.count(key))
 
-//    val all = session.list(key)
-//    val columnFilter = session.list(key, column.value :: value3.name.value :: Nil)
-//    val limitFilter  = session.list(key, None, None, Order.Ascending, Some(2))
-//    val alphaFilter  = session.list(key, Some("Bar"), Some("Created"), Order.Ascending, None)
+    session.list(key).foreach { (value) =>
+      log("[%s] queried key '1', got value: %s -> %s", now, value.name, value)
+    }
 
-    log("result: %s", result)
-//    log("[%s] standard result, count: %s, value: %s", now, count, result)
-//    log("[%s] standard result list count, all: %s, columnFilter: %s, limitFilter: %s, alphaFilter: %s", now, all.size, columnFilter.size, limitFilter.size, alphaFilter.size)
-//    log("[%s] standard result list all: %s", now, toString(all) )
-//    log("[%s] standard result list column filtered: %s", now, toString(columnFilter))
-//    log("[%s] standard result list limit(2) filtered: %s", now, toString(limitFilter))
-//    log("[%s] standard result list alpha(Bar -> Created) filtered: %s", now, toString(alphaFilter))
-    log("\n")
+    session.list(key, RangePredicate("Bar", "Foo")).foreach { (value) =>
+      log("[%s] queried range 'Bar' to 'Foo' on Key #1 - got value: %s -> %s", now, value.name, value)
+    }
+
+    session.list(key, ColumnPredicate(List("Moo", "Bar"))).foreach { (value) =>
+      log("[%s] queried columns 'Moo' & 'Bar' on Key #1 - got value: %s -> %s", now, value.name, value)
+    }
   }
 
 
@@ -62,14 +68,33 @@ object SampleClient {
     session.insert(value1)
     session.insert(value2)
 
-    var columnResult = session.get(value1.name)
-    var superResult  = session.get(superColumn)
+    val columnResult = session.get(value1.name)
+    val superResult  = session.get(superColumn)
+    log("[%s] standard column result: %s", now, columnResult)
+    log("[%s] super column get result for: %s", now, UUID(superColumn.value))
+    superResult.foreach { (value) =>
+      log("[%s]    %s -> %s", now, value.name, value)
+    }
     
-//    var count    = session.count(key)
-//    var subCount = session.count(superColumn)
-    log("result: %s", columnResult)
-    log("result2: %s", (superResult.keySet.map { superResult(_) }).toSeq)
-//    log("[%s] super result, key count: %s, super column count: %s, value: %s", now, count, subCount, string(result.value))
+    log("[%s] number of super columns: %s, number of columns in first super: %s", now, session.count(key), session.count(superColumn))
+
+    // example listing at the super key level
+    val superKeyMap = session.list(key, RangePredicate(5))
+    log("[%s] super column list return %s keys", now, superKeyMap.size)
+    superKeyMap.foreach { (sc) =>
+      log("[%s]  SuperKey: %s", now, sc._1)
+      superKeyMap(sc._1).foreach { (value) =>
+        log("[%s]    %s -> %s", now, value.name, value)
+      }
+    }
+
+    // example listing at the super column level
+    val recentInsert = session.list(superColumn)
+    log("[%s] listed recent inserts, size: %s", now, recentInsert.size)
+    recentInsert.foreach { (value) =>
+      log("[%s]  %s -> %s", now, value.name, value)
+    }
+
   }
 
   implicit def colSeqtoString(list:Seq[ColumnValue[_]]):String = (list.map { (cv) => "[%s -> %s]".format(cv.name, cv) }).mkString("", ",", "")

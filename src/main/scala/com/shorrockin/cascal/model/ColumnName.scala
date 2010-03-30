@@ -8,7 +8,7 @@ package com.shorrockin.cascal.model
  * column is looked up through the session object.
  */
 trait ColumnName[Contents] extends ByteValue {
-  val key:Key[_]
+  val key:Key[_, _]
   val keyspace:Keyspace
   val family:ColumnFamily[_]
   
