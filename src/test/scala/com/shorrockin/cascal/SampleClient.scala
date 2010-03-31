@@ -77,7 +77,7 @@ object SampleClient {
     log("[%s] number of super columns: %s, number of columns in first super: %s", now, session.count(key), session.count(superColumn))
 
     // example listing at the super key level
-    val superKeyMap = session.list(key, RangePredicate(5))
+    val superKeyMap = session.list(key, RangePredicate(Order.Descending, 5))
     log("[%s] super column list return %s keys", now, superKeyMap.size)
     superKeyMap.foreach { (sc) =>
       log("[%s]  SuperKey: %s", now, sc._1)

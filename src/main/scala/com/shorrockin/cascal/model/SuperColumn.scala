@@ -1,5 +1,8 @@
 package com.shorrockin.cascal.model
 
+import org.apache.cassandra.thrift.ColumnOrSuperColumn
+import scala.collection.jcl.Conversions.convertList
+
 /**
  * a super standard key the key who's parent is a super key. It acts in much
  * the same fashion as a standard key except for the parent structure is a SuperKey,
@@ -13,4 +16,25 @@ case class SuperColumn(val value:Array[Byte], val key:SuperKey) extends Gettable
 
   val family = key.family
   val keyspace = family.keyspace
+
+  /**
+   * given the returned object from the get request, convert
+   * to our return type.
+   */
+  def convertGetResult(colOrSuperCol:ColumnOrSuperColumn):Seq[Column[SuperColumn]] = {
+    val superCol = colOrSuperCol.getSuper_column
+    convertList(superCol.getColumns).map { (column) => \(column.getName, column.getValue, column.getTimestamp) }
+  }
+
+
+  /**
+   * given the return object from the list request, convert it to
+   * our return type
+   */
+  def convertListResult(results:Seq[ColumnOrSuperColumn]):Seq[Column[SuperColumn]] = {
+    results.map { (result) =>
+      val column = result.getColumn
+      \(column.getName, column.getValue, column.getTimestamp)
+    }
+  }
 }
