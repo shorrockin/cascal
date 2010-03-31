@@ -22,14 +22,11 @@ object UUID {
    */
   def apply(data:Array[Byte]):JavaUUID = {
     var msb = 0L
-    var lsb = 0
+    var lsb = 0L
     assert(data.length == 16)
 
     (0 until 8).foreach  { (i) => msb = (msb << 8) | (data(i) & 0xff) }
     (8 until 16).foreach { (i) => lsb = (lsb << 8) | (data(i) & 0xff) }
-
-    val mostSigBits = msb
-    val leastSigBits = lsb
 
     JavaUUID.fromString(new EaioUUID(msb,lsb).toString)
   }

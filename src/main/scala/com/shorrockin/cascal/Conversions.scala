@@ -17,7 +17,9 @@ object Conversions {
 
   implicit def keyspace(str:String) = new Keyspace(str)
 
-  implicit def string(source:JavaUUID) = new String(bytes(source), Conversions.utf8)
+  implicit def string(source:JavaUUID) = source.toString
+
+  implicit def uuid(source:String) = JavaUUID.fromString(source);
 
   implicit def bytes(source:JavaUUID):Array[Byte] = {
     val msb = source.getMostSignificantBits()

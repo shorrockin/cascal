@@ -1,5 +1,6 @@
 package com.shorrockin.cascal
 
+import java.util.Date
 import model.{Column, StringValue, ByteValue}
 
 object SampleClient {
@@ -10,7 +11,7 @@ object SampleClient {
   def now = System.currentTimeMillis
 
   val Presence = "NOS" \ "Presence"
-  val Events = "NOS" \\ "Events"
+  val Events   = "NOS" \\ "Events"
 
   def main(args:Array[String]) {
     val session = new Session("shorrockin.com", 9160, Consistency.One)
@@ -30,46 +31,48 @@ object SampleClient {
   }
 
   def testStandard(session:Session) = {
-    log("[%s] standard about to insert/query", now)
-    val key    = Presence \ "1"
-    val value1 = Presence \ "1" \ "Moo" \ ("Presence Time: " + new java.util.Date().toString)
-    val value2 = Presence \ "1" \ "Foo" \ "Value 2"
-    val value3 = Presence \ "1" \ "Bar" \ "Value 3"
+    val key  = Presence \ "1"
+    val moo  = Presence \ "1" \ ("Moo", "Moo Val: " + new Date())
+    val foo  = Presence \ "1" \ ("Foo", "Foo Val: " + new Date())
+    val bar  = Presence \ "1" \ ("Bar", "Bar Val: " + new Date())
 
-    session.insert(value1)
-    session.insert(value2)
-    session.insert(value3)
+    log("[%s] inserting 'Moo', 'Foo', and 'Bar'", now)
+    session.insert(moo)
+    session.insert(foo)
+    session.insert(bar)
 
-    log("[%s] result1 value: %s", now, session.get(value1))
-    log("[%s] result2 value: %s", now, session.get(value2))
-    log("[%s] number of columns in key: %s", now, session.count(key))
+    log("[%s] get('Moo'): %s", now, session.get(moo))
+    log("[%s] get('Foo'): %s", now, session.get(foo))
+    log("[%s] count(1): %s", now, session.count(key))
 
     session.list(key).foreach { (column) =>
-      log("[%s] queried key '1', got column: %s", now, column)
+      log("[%s] list(key '1'): %s", now, column)
     }
 
     session.list(key, RangePredicate("Bar", "Foo")).foreach { (column) =>
-      log("[%s] queried range 'Bar' to 'Foo' on Key #1 - got column: %s", now, column)
+      log("[%s] list(key '1', 'Bar' -> 'Foo'): %s", now, column)
     }
 
     session.list(key, ColumnPredicate(List("Moo", "Bar"))).foreach { (column) =>
-      log("[%s] queried columns 'Moo' & 'Bar' on Key #1 - got column: %s", now, column)
+      log("[%s] list(key 1, 'Moo' & 'Bar'): %s", now, column)
     }
   }
 
 
   def testSuper(session:Session) = {
     log("[%s] super about to insert/query", now)
+    val timeUUID    = UUID()
     val key         = Events \ "1"
-    val superColumn = Events \ "1" \ UUID()
-    val value1      = superColumn \ "Message" \ ("Event Time: " + new java.util.Date().toString)
-    val value2      = superColumn \ "Other Message" \ "Another Message"
+    val superColumn = Events \ "1" \ timeUUID
+    val value1      = Events \ "1" \ timeUUID \ "Message" \ ("Event Time: " + new Date())
+    val value2      = Events \ "1" \ timeUUID \ "Other Message" \ "Another Message"
 
     session.insert(value1)
     session.insert(value2)
 
     val columnResult = session.get(value1)
     val superResult  = session.get(superColumn)
+    
     log("[%s] standard column result: %s", now, columnResult)
     log("[%s] super column get result for: %s", now, UUID(superColumn.value))
     superResult.foreach { (column) => log("[%s]    %s", now, column) }
@@ -80,7 +83,7 @@ object SampleClient {
     val superKeyMap = session.list(key, RangePredicate(Order.Descending, 5))
     log("[%s] super column list return %s keys", now, superKeyMap.size)
     superKeyMap.foreach { (sc) =>
-      log("[%s]  SuperKey: %s", now, sc._1)
+      log("[%s]  SuperKey: %s", now, UUID(sc._1.value))
       superKeyMap(sc._1).foreach { (column) => log("[%s]    %s", now, column) }
     }
 
@@ -91,9 +94,7 @@ object SampleClient {
 
   }
 
-  implicit def columnToString(col:Column[_]):String = "%s -> %s (time: %s)".format(string(col.name),
-                                                                                           string(col.value),
-                                                                                           col.time)
+  implicit def columnToString(col:Column[_]):String = "%s -> %s (time: %s)".format(string(col.name), string(col.value), col.time)
   implicit def intToString(i:Int):String = Integer.toString(i)
   implicit def longToString(l:Long):String = java.lang.Long.toString(l)
   implicit def byteValueToString(obj:ByteValue):String = string(obj.value)
