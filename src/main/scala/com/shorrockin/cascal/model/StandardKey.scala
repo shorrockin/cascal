@@ -7,9 +7,9 @@ package com.shorrockin.cascal.model
  *
  * @author Chris Shorrock
  */
-case class StandardKey(val value:String, val family:StandardColumnFamily) extends Key[StandardColumn[StandardKey], Seq[StandardColumn[StandardKey]]]
-                                                                             with StandardColumnContainer[StandardColumn[StandardKey], Seq[StandardColumn[StandardKey]]] {
-  def \(name:Array[Byte]) = new StandardColumn(name, this)
-  def \(name:Array[Byte], value:Array[Byte]) = new StandardColumn(name, value, this)
-  def \(name:Array[Byte], value:Array[Byte], time:Long) = new StandardColumn(name, value, time, this)
+case class StandardKey(val value:String, val family:StandardColumnFamily) extends Key[Column[StandardKey], Seq[Column[StandardKey]]]
+                                                                             with StandardColumnContainer[Column[StandardKey], Seq[Column[StandardKey]]] {
+  def \(name:Array[Byte]) = new Column(name, this)
+  def \(name:Array[Byte], value:Array[Byte]) = new Column(name, value, this)
+  def \(name:Array[Byte], value:Array[Byte], time:Long) = new Column(name, value, time, this)
 }

@@ -1,6 +1,6 @@
 package com.shorrockin.cascal
 
-import model.{StandardColumn, StringValue, ByteValue}
+import model.{Column, StringValue, ByteValue}
 
 object SampleClient {
   import Conversions._
@@ -91,7 +91,7 @@ object SampleClient {
 
   }
 
-  implicit def columnToString(col:StandardColumn[_]):String = "%s -> %s (time: %s)".format(string(col.name),
+  implicit def columnToString(col:Column[_]):String = "%s -> %s (time: %s)".format(string(col.name),
                                                                                            string(col.value),
                                                                                            col.time)
   implicit def intToString(i:Int):String = Integer.toString(i)
