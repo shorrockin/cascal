@@ -9,7 +9,8 @@ import java.util.{List => JList}
 import com.shorrockin.cascal.Conversions._
 
 import model._
-import org.apache.cassandra.thrift.{Column, Cassandra, ColumnPath, ColumnParent, ColumnOrSuperColumn, ConsistencyLevel}
+import org.apache.cassandra.thrift.{Column => CasColumn}
+import org.apache.cassandra.thrift.{Cassandra, ColumnPath, ColumnParent, ColumnOrSuperColumn, ConsistencyLevel}
 
 /**
  * a cascal session is the entry point for interacting with the
@@ -60,7 +61,7 @@ class Session(val host:String, val port:Int, val defaultConsistency:Consistency)
   /**
    *  returns the column value for the specified column
    */
-  def get[ResultType](col:ColumnName[ResultType], consistency:Consistency):ResultType = {
+  def get[ResultType](col:Column[ResultType], consistency:Consistency):ResultType = {
     toColumnNameType(col, client.get(col.keyspace.value, col.key.value, toColumnPath(col), consistency))
   }
 
@@ -68,21 +69,21 @@ class Session(val host:String, val port:Int, val defaultConsistency:Consistency)
   /**
    * returns the column value for the specified column, using the default consistency
    */
-  def get[ResultType](col:ColumnName[ResultType]):ResultType = get(col, defaultConsistency)
+  def get[ResultType](col:Column[ResultType]):ResultType = get(col, defaultConsistency)
 
 
   /**
    * inserts the specified column value
    */
-  def insert(value:ColumnValue[_], consistency:Consistency) {
-    client.insert(value.keyspace.value, value.key.value, toColumnPath(value.name), value.value, value.time, consistency)
+  def insert(col:StandardColumn[_], consistency:Consistency) {
+    client.insert(col.keyspace.value, col.key.value, toColumnPath(col), col.value, col.time, consistency)
   }
 
 
   /**
    * inserts the specified column value using the default consistency
    */
-  def insert(value:ColumnValue[_]):Unit = insert(value, defaultConsistency)
+  def insert(col:StandardColumn[_]):Unit = insert(col, defaultConsistency)
 
 
   /**
@@ -135,15 +136,14 @@ class Session(val host:String, val port:Int, val defaultConsistency:Consistency)
                                                           javaResults:JList[ColumnOrSuperColumn]):ResultType = {
     
 
-    def asColumnList[A, B](c:ColumnContainer[StandardColumn[A], B], results:Seq[Column] ) = {
+    def asColumnList[A, B](c:StandardColumnContainer[StandardColumn[A], B], results:Seq[CasColumn] ) = {
       results.map { (casColumn) =>
-        val stdColumn = c \ casColumn.getName
-        stdColumn.\(casColumn.getValue, casColumn.getTimestamp)
+        c \ (casColumn.getName, casColumn.getValue, casColumn.getTimestamp)
       }
     }
 
     def asSuperColumnMap(c:SuperKey, results:Seq[ColumnOrSuperColumn]) = {
-      var out = Map[SuperColumn, Seq[ColumnValue[SuperColumn]]]()
+      var out = Map[SuperColumn, Seq[StandardColumn[SuperColumn]]]()
       results.foreach { (result) =>
         val casSuperCol = result.getSuper_column
         val sc = c \ casSuperCol.getName
@@ -179,27 +179,25 @@ class Session(val host:String, val port:Int, val defaultConsistency:Consistency)
    * given the column name which was used to retrieve the result
    * create the instance of E required to interpret this result.
    */
-  private def toColumnNameType[E](col:ColumnName[E], result:ColumnOrSuperColumn):E = columnToDefinition(col) match {
+  private def toColumnNameType[E](col:Column[E], result:ColumnOrSuperColumn):E = columnToDefinition(col) match {
     // returns a ColumnValue
     case StandardColDef(value, std) =>
       val resCol = result.getColumn
-      (std.\(resCol.getValue, resCol.getTimestamp)).asInstanceOf[E]
+      (std.key.asInstanceOf[StandardKey] \ (resCol.getName, resCol.getValue, resCol.getTimestamp)).asInstanceOf[E]
 
     // returns a ColumnValue
     case SuperStandardColDef(SuperColDef(superVal, sup), StandardColDef(colVal, std)) =>
       val resCol = result.getColumn
-      (std.\(resCol.getValue, resCol.getTimestamp)).asInstanceOf[E]
+      (sup \ (resCol.getName, resCol.getValue, resCol.getTimestamp)).asInstanceOf[E]
 
-    // returns a Map[StandardColumn -> ColumnValue]
+    // returns a Map[DepStandardColumn -> ColumnValue]
     case SuperColDef(value, sup) =>
       val resCol = result.getSuper_column
-      var out = List[ColumnValue[SuperColumn]]()
+      var out = List[StandardColumn[SuperColumn]]()
 
       val scalaColumns = scala.collection.jcl.Conversions.convertList(resCol.getColumns)
       scalaColumns.foreach { (column) =>
-        val left  = sup \ column.getName
-        val right = left.\(column.getValue, column.getTimestamp)
-        out = out + right
+        out = (sup \ (column.getName, column.getValue, column.getTimestamp)) :: out
       }
       out.asInstanceOf[E]
   }
@@ -210,7 +208,7 @@ class Session(val host:String, val port:Int, val defaultConsistency:Consistency)
    * names will be either a standard column which belongs to a standard key,
    * a super column, or a standard column which belongs to a super key.
    */
-  private def toColumnPath(col:ColumnName[_]):ColumnPath = columnToDefinition(col) match {
+  private def toColumnPath(col:Column[_]):ColumnPath = columnToDefinition(col) match {
     case StandardColDef(value, std) =>
       val out = new ColumnPath(std.family.value)
       out.setColumn(value)
@@ -228,11 +226,15 @@ class Session(val host:String, val port:Int, val defaultConsistency:Consistency)
    * maps a column name to a definition which should allow for better pattern
    * matching.
    */
-  private def columnToDefinition(col:ColumnName[_]) = col.key match {
+  private def columnToDefinition(col:Column[_]) = col.key match {
     case key:StandardKey => StandardColDef(col.value, col.asInstanceOf[StandardColumn[_]])
     case key:SuperKey    => col match {
-      case sc:SuperColumn                 => SuperColDef(col.value, sc)
-      case sc:StandardColumn[SuperColumn] => SuperStandardColDef(SuperColDef(sc.owner.value, sc.owner), StandardColDef(sc.value, sc))
+      case sc:SuperColumn       => SuperColDef(col.value, sc)
+      case sc:StandardColumn[_] =>
+        val scOwner        = sc.owner.asInstanceOf[SuperColumn]
+        val superColDef    = SuperColDef(scOwner.value, scOwner)
+        val standardColDef = StandardColDef(sc.value, sc)
+        SuperStandardColDef(superColDef, standardColDef)
     }
   }
 

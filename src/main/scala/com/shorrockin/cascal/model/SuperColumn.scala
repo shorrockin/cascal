@@ -5,9 +5,12 @@ package com.shorrockin.cascal.model
  * the same fashion as a standard key except for the parent structure is a SuperKey,
  * and not a StandardColumnFamily
  */
-case class SuperColumn(val value:Array[Byte], val key:SuperKey) extends ColumnName[Seq[ColumnValue[SuperColumn]]]()
-                                                                   with ColumnContainer[StandardColumn[SuperColumn], Seq[ColumnValue[SuperColumn]]] {
-  def \(value:Array[Byte]) = new StandardColumn[SuperColumn](value, this)
+case class SuperColumn(val value:Array[Byte], val key:SuperKey) extends Column[Seq[StandardColumn[SuperColumn]]]()
+                                                                   with StandardColumnContainer[StandardColumn[SuperColumn], Seq[StandardColumn[SuperColumn]]] {
+  def \(name:Array[Byte]) = new StandardColumn(name, this)
+  def \(name:Array[Byte], value:Array[Byte]) = new StandardColumn(name, value, this)
+  def \(name:Array[Byte], value:Array[Byte], time:Long) = new StandardColumn(name, value, time, this)
+
   val family = key.family
   val keyspace = family.keyspace
 }

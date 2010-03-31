@@ -1,6 +1,6 @@
 package com.shorrockin.cascal
 
-import model.{StringValue, ByteValue, ColumnValue}
+import model.{StandardColumn, StringValue, ByteValue}
 
 object SampleClient {
   import Conversions._
@@ -40,20 +40,20 @@ object SampleClient {
     session.insert(value2)
     session.insert(value3)
 
-    log("[%s] result1 value: %s", now, session.get(value1.name))
-    log("[%s] result2 value: %s", now, session.get(value2.name))
+    log("[%s] result1 value: %s", now, session.get(value1))
+    log("[%s] result2 value: %s", now, session.get(value2))
     log("[%s] number of columns in key: %s", now, session.count(key))
 
-    session.list(key).foreach { (value) =>
-      log("[%s] queried key '1', got value: %s -> %s", now, value.name, value)
+    session.list(key).foreach { (column) =>
+      log("[%s] queried key '1', got column: %s", now, column)
     }
 
-    session.list(key, RangePredicate("Bar", "Foo")).foreach { (value) =>
-      log("[%s] queried range 'Bar' to 'Foo' on Key #1 - got value: %s -> %s", now, value.name, value)
+    session.list(key, RangePredicate("Bar", "Foo")).foreach { (column) =>
+      log("[%s] queried range 'Bar' to 'Foo' on Key #1 - got column: %s", now, column)
     }
 
-    session.list(key, ColumnPredicate(List("Moo", "Bar"))).foreach { (value) =>
-      log("[%s] queried columns 'Moo' & 'Bar' on Key #1 - got value: %s -> %s", now, value.name, value)
+    session.list(key, ColumnPredicate(List("Moo", "Bar"))).foreach { (column) =>
+      log("[%s] queried columns 'Moo' & 'Bar' on Key #1 - got column: %s", now, column)
     }
   }
 
@@ -68,13 +68,11 @@ object SampleClient {
     session.insert(value1)
     session.insert(value2)
 
-    val columnResult = session.get(value1.name)
+    val columnResult = session.get(value1)
     val superResult  = session.get(superColumn)
     log("[%s] standard column result: %s", now, columnResult)
     log("[%s] super column get result for: %s", now, UUID(superColumn.value))
-    superResult.foreach { (value) =>
-      log("[%s]    %s -> %s", now, value.name, value)
-    }
+    superResult.foreach { (column) => log("[%s]    %s", now, column) }
     
     log("[%s] number of super columns: %s, number of columns in first super: %s", now, session.count(key), session.count(superColumn))
 
@@ -83,21 +81,19 @@ object SampleClient {
     log("[%s] super column list return %s keys", now, superKeyMap.size)
     superKeyMap.foreach { (sc) =>
       log("[%s]  SuperKey: %s", now, sc._1)
-      superKeyMap(sc._1).foreach { (value) =>
-        log("[%s]    %s -> %s", now, value.name, value)
-      }
+      superKeyMap(sc._1).foreach { (column) => log("[%s]    %s", now, column) }
     }
 
     // example listing at the super column level
     val recentInsert = session.list(superColumn)
     log("[%s] listed recent inserts, size: %s", now, recentInsert.size)
-    recentInsert.foreach { (value) =>
-      log("[%s]  %s -> %s", now, value.name, value)
-    }
+    recentInsert.foreach { (column) => log("[%s]  %s", now, column) }
 
   }
 
-  implicit def colSeqtoString(list:Seq[ColumnValue[_]]):String = (list.map { (cv) => "[%s -> %s]".format(cv.name, cv) }).mkString("", ",", "")
+  implicit def columnToString(col:StandardColumn[_]):String = "%s -> %s (time: %s)".format(string(col.name),
+                                                                                           string(col.value),
+                                                                                           col.time)
   implicit def intToString(i:Int):String = Integer.toString(i)
   implicit def longToString(l:Long):String = java.lang.Long.toString(l)
   implicit def byteValueToString(obj:ByteValue):String = string(obj.value)

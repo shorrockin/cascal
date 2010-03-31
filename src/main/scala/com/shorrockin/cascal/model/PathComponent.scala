@@ -1,8 +1,5 @@
 package com.shorrockin.cascal.model
 
-/**
- * a cassandra component type, holds true for all types
- */
-trait PathComponent[ValueType] {
-  val value:ValueType
-}
+trait PathComponent[ValueType] { val value:ValueType }
+trait ByteValue extends PathComponent[Array[Byte]]
+trait StringValue extends PathComponent[String]
