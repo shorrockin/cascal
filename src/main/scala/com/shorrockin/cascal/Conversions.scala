@@ -1,9 +1,9 @@
 package com.shorrockin.cascal
 
-import model.Keyspace
 import java.nio.charset.Charset
 import java.util.{UUID => JavaUUID}
 import collection.jcl.BufferWrapper
+import model.{Column, Keyspace}
 
 /**
  * some implicits to assist with common conversions
@@ -31,6 +31,14 @@ object Conversions {
 
     buffer
   }
+
+  implicit def string(col:Column[_]):String = {
+    "%s -> %s (time: %s)".format(Conversions.string(col.name),
+                                 Conversions.string(col.value),
+                                 col.time)
+  }
+
+  implicit def toSeqBytes(values:Seq[String]) = values.map { (s) => Conversions.bytes(s) }
 
   implicit def toJavaList[T](l: Seq[T]):java.util.List[T] = l.foldLeft(new java.util.ArrayList[T](l.size)){(al, e) => al.add(e); al}
 }

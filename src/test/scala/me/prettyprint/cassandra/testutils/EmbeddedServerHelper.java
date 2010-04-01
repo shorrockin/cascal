@@ -46,7 +46,8 @@ public class EmbeddedServerHelper {
     t.start();
   }
 
-  public void teardown() throws IOException {
+  public void shutdown() throws IOException {
+    cassandra.shutdown();
     CassandraServiceDataCleaner cleaner = new CassandraServiceDataCleaner();
     cleaner.cleanupDataDirectories();
     rmdir(TMP);

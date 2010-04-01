@@ -46,4 +46,8 @@ public class EmbeddedCassandraService implements Runnable {
   public void run() {
     cassandraDaemon.start();
   }
+
+  public void shutdown() {
+    cassandraDaemon.stop();
+  }
 }

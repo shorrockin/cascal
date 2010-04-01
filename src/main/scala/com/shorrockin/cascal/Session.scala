@@ -11,6 +11,7 @@ import com.shorrockin.cascal.Conversions._
 import model._
 import org.apache.cassandra.thrift.{Column => CasColumn}
 import org.apache.cassandra.thrift.{Cassandra, ColumnPath, ColumnParent, ColumnOrSuperColumn, ConsistencyLevel}
+import collection.jcl.Buffer
 
 /**
  * a cascal session is the entry point for interacting with the
@@ -55,7 +56,7 @@ class Session(val host:String, val port:Int, val defaultConsistency:Consistency)
   /**
    * returns all the keyspaces from the cassandra instance
    */
-  lazy val keyspaces = client.get_string_list_property("keyspaces")
+  lazy val keyspaces:Seq[String] = Buffer(client.get_string_list_property("keyspaces"))
 
 
   /**
