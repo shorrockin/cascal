@@ -6,7 +6,7 @@ class TestEmbeddedCassandra extends EmbeddedCassandra {
   import Assert._
   import Conversions._
 
-  @Test def testCanUseSession = boot { (s) =>
+  @Test def testCanUseSession = withSession { (s) =>
     import s._
     val key    = "Test" \ "Standard" \ "testCanUseSessions"
     val column = key \ "Hello" \ "World"

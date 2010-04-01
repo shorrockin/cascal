@@ -127,6 +127,46 @@ class Session(val host:String, val port:Int, val defaultConsistency:Consistency)
 
 
   /**
+   * given a list of keys, will perform a slice retrieving all the keys specified
+   * applying the provided predicate against those keys. Assumes that all the keys
+   * belong to the same keyspace and column family. If they are not, the first key
+   * in the sequence what is used in this query.
+   */
+  def list[ColumnType, ListType](keys:Seq[Key[ColumnType, ListType]], predicate:Predicate, consistency:Consistency):Map[Key[ColumnType, ListType], ListType] = {
+    if (keys.size > 0) {
+      val firstKey   = keys(0)
+      val keyspace   = firstKey.keyspace
+      val keyStrings = keys.map { _.value }
+      val results    = client.multiget_slice(keyspace.value, keyStrings, toColumnParent(firstKey), predicate.slicePredicate, consistency)
+
+      def locate(str:String) = (keys.find { _.value.equals(str) }).get
+      var out = Map[Key[ColumnType, ListType], ListType]()
+      results.foreach { (tuple) =>
+        val key   = locate(tuple._1)
+        val value = key.convertListResult(tuple._2)
+        out = out + (key -> value)
+      }
+
+      out
+    } else {
+      throw new IllegalArgumentException("must provide at least 1 key for a list(keys, predicate, consistency) call")
+    }
+  }
+
+
+  /**
+   * @see list(Seq[Key], Predicate, Consistency)
+   */
+  def list[ColumnType, ListType](keys:Seq[Key[ColumnType, ListType]]):Map[Key[ColumnType, ListType], ListType] = list(keys, EmptyPredicate, defaultConsistency)
+
+
+  /**
+   * @see list(Seq[Key], Predicate, Consistency)
+   */
+  def list[ColumnType, ListType](keys:Seq[Key[ColumnType, ListType]], predicate:Predicate):Map[Key[ColumnType, ListType], ListType] = list(keys, predicate, defaultConsistency)
+
+
+  /**
    * implicitly coverts a consistency value to an int
    */
   private implicit def toThriftConsistency(c:Consistency):ConsistencyLevel = c.thriftValue

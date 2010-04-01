@@ -6,9 +6,9 @@ package com.shorrockin.cascal.model
  * standard keys.
  *
  * @type ColumnType the type of column that this key holds
- * @type SliceType when this key is used in a slice the type of object that is returned
+ * @type ListType when this key is used in a list the type of object that is returned
  */
-trait Key[ColumnType, SliceType] extends StringValue with ColumnContainer[ColumnType, SliceType] {
+trait Key[ColumnType, ListType] extends StringValue with ColumnContainer[ColumnType, ListType] {
   val value:String
 
   val keyspace = family.keyspace

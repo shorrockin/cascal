@@ -8,7 +8,7 @@ class TestStandardFamily extends EmbeddedCassandra with Logging {
   import Assert._
   import Conversions._
 
-  @Test def testStandardFunctions = boot { (session) =>
+  @Test def testStandardFunctions = withSession { (session) =>
     import session._
 
     log.debug("Cluster Name: " + clusterName)

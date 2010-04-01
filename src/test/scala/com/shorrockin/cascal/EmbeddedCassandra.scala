@@ -13,7 +13,7 @@ import java.io.File
 trait EmbeddedCassandra extends Logging {
   import Utils._
 
-  def boot(f:(Session) => Unit) = {
+  def withSession(f:(Session) => Unit) = {
     EmbeddedCassandra.init
     val session = new Session("localhost", 9160, Consistency.One)
     manage(session) { f(session) }

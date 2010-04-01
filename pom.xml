@@ -55,19 +55,20 @@
             <arg>-target:jvm-${java.compile.version}</arg>
           </args>
         </configuration>
-	<dependencies>
-	  <dependency>
-	    <groupId>org.scala-lang</groupId>
-	    <artifactId>scala-library</artifactId>
-	    <version>${scala.version}</version>
-	  </dependency>
+          
+        <dependencies>
+          <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-library</artifactId>
+            <version>${scala.version}</version>
+          </dependency>
 
-	  <dependency>
-	    <groupId>org.scala-lang</groupId>
-	    <artifactId>scala-compiler</artifactId>
-	    <version>${scala.version}</version>
-	  </dependency>
-	</dependencies>
+          <dependency>
+            <groupId>org.scala-lang</groupId>
+            <artifactId>scala-compiler</artifactId>
+            <version>${scala.version}</version>
+          </dependency>
+        </dependencies>
       </plugin>
     </plugins>
   </build>
@@ -87,8 +88,24 @@
 
     <repository>
       <id>shorrockin.com</id>
-      <name>Shorrockin Repositor</name>
+      <name>Shorrockin Repository</name>
       <url>http://10.104.216.39:9001/maven/</url>
+    </repository>
+
+    <repository>
+        <releases>
+            <enabled>true</enabled>
+            <updatePolicy>daily</updatePolicy>
+            <checksumPolicy>warn</checksumPolicy>
+        </releases>
+        <snapshots>
+            <enabled>true</enabled>
+            <updatePolicy>daily</updatePolicy>
+            <checksumPolicy>warn</checksumPolicy>
+        </snapshots>
+        <id>com.eaio</id>
+        <name>eaio.com repository</name>
+        <url>http://eaio.com/maven2</url>
     </repository>
   </repositories>
 
@@ -98,7 +115,14 @@
       <artifactId>scala-library</artifactId>
       <version>${scala.version}</version>
     </dependency>
-
+<!--
+    <dependency>
+        <groupId>com.eaio.uuid</groupId>
+        <artifactId>uuid</artifactId>
+        <version>3.1</version>
+    </dependency>
+-->
+      
     <dependency>
       <groupId>org.apache.thrift</groupId>
       <artifactId>libthrift</artifactId>

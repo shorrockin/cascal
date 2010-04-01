@@ -7,7 +7,7 @@ class TestSuperFamily extends EmbeddedCassandra with Logging {
   import Assert._
   import Conversions._
 
-  @Test def testSuperFamily = boot { (session) =>
+  @Test def testSuperFamily = withSession { (session) =>
     import session._
 
     val key          = "Test" \\ "Super" \ "1"
