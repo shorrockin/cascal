@@ -4,7 +4,7 @@ import model.Column
 import org.junit.{Assert, Test}
 import java.util.Date
 
-class TestStandardFamily extends EmbeddedCassandra with Logging {
+class TestStandardInesrtAndList extends EmbeddedCassandra with Logging {
   import Assert._
   import Conversions._
 

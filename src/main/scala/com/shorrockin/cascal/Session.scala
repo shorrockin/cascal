@@ -4,14 +4,12 @@ package com.shorrockin.cascal
 import org.apache.thrift.transport.TSocket
 import org.apache.thrift.protocol.TBinaryProtocol
 import collection.jcl.Conversions._
-import java.util.Arrays
-import java.util.{List => JList}
 import com.shorrockin.cascal.Conversions._
 
 import model._
 import collection.jcl.Buffer
-import org.apache.cassandra.thrift.Cassandra
-import org.apache.cassandra.thrift.{NotFoundException, ConsistencyLevel}
+import org.apache.cassandra.thrift.{Mutation, Cassandra, NotFoundException, ConsistencyLevel}
+import java.util.{Map => JMap, List => JList, HashMap, ArrayList}
 
 /**
  * a cascal session is the entry point for interacting with the
@@ -63,7 +61,7 @@ class Session(val host:String, val port:Int, val defaultConsistency:Consistency)
    */
   lazy val keyspaces:Seq[String] = Buffer(client.get_string_list_property("keyspaces"))
 
-
+  
   /**
    *  returns the column value for the specified column
    */
@@ -99,14 +97,7 @@ class Session(val host:String, val port:Int, val defaultConsistency:Consistency)
 
 
   /**
-   * inserts a batch of columns all at once, this only incures one call
-
-  def insert(cols:Seq[Column[_]], consistency:Consistency) = {
-  } */
-
-
-  /**
-   *  counts the number of columns in the specified column container
+   *   counts the number of columns in the specified column container
    */
   def count(container:ColumnContainer[_ ,_], consistency:Consistency):Int = {
     client.get_count(container.keyspace.value, container.key.value, container.columnParent, consistency)
@@ -210,19 +201,83 @@ class Session(val host:String, val port:Int, val defaultConsistency:Consistency)
 
 
   /**
-   * implicitly coverts a consistency value to an int
+   * performs a list on a key range in the specified column family. the predicate is applied
+   * with the provided consistency guaranteed. the key range may be a range of keys or a range
+   * of tokens. This list call is only available when using an order-preserving partition.
    */
-  private implicit def toThriftConsistency(c:Consistency):ConsistencyLevel = c.thriftValue
+  def list[ColumnType, ListType](family:ColumnFamily[Key[ColumnType, ListType]], range:KeyRange, predicate:Predicate, consistency:Consistency):Map[Key[ColumnType, ListType], ListType] = {
+    val results = client.get_range_slices(family.keyspace.value, family.columnParent, predicate.slicePredicate, range.cassandraRange, consistency)
+    var map     = Map[Key[ColumnType, ListType], ListType]()
+
+    results.foreach { (keyslice) =>
+      val key = (family \ keyslice.key)
+      map = map + (key -> key.convertListResult(keyslice.columns))
+    }
+    map
+  }
+
+  
+  /**
+   * performs a key-range list without any predicate
+   */
+  def list[ColumnType, ListType](family:ColumnFamily[Key[ColumnType, ListType]], range:KeyRange, consistency:Consistency):Map[Key[ColumnType, ListType], ListType] = {
+    list(family, range, EmptyPredicate, consistency)
+  }
 
 
   /**
-   * converts a column container to a parent structure
-
-  private def toColumnParent(col:ColumnContainer[_, _]):ColumnParent = col match {
-    case key:SuperColumn => val out = new ColumnParent(col.family.value) ; out.setSuper_column(key.value)
-    case key:Key[_ , _]  => new ColumnParent(col.family.value)
+   * performs a key-range list without any predicate, and using the default consistency
+   */
+  def list[ColumnType, ListType](family:ColumnFamily[Key[ColumnType, ListType]], range:KeyRange):Map[Key[ColumnType, ListType], ListType] = {
+    list(family, range, EmptyPredicate, defaultConsistency)
   }
-  */
+
+
+  /**
+   * performs the specified seq of operations in batch. assumes all operations belong
+   * to the same keyspace. If they do not then the first keyspace in the first operation
+   * is used.
+   */
+  def batch(ops:Seq[Operation], consistency:Consistency):Unit = {
+    if (ops.size > 0) {
+      val keyToFamilyMutations = new HashMap[String, JMap[String, JList[Mutation]]]()
+      val keyspace = ops(0).keyspace
+
+      def getOrElse[A, B](map:JMap[A, B], key:A, f: => B):B = {
+        if (map.containsKey(key)) {
+          map.get(key)
+        } else {
+          val newValue = f
+          map.put(key, newValue)
+          newValue
+        }
+      }
+
+      ops.foreach { (op) =>
+        val familyToMutations = getOrElse(keyToFamilyMutations, op.key.value, new HashMap[String, JList[Mutation]]())
+        val mutationList      = getOrElse(familyToMutations, op.family.value, new ArrayList[Mutation]())
+        mutationList.add(op.mutation)
+      }
+
+      // TODO need to do a super column flatten as we'll have multple
+      // of the same super columns in this list
+      client.batch_mutate(keyspace.value, keyToFamilyMutations, consistency)
+    } else {
+      throw new IllegalArgumentException("cannot perform batch operation on 0 length operation sequence")
+    }
+  }
+
+
+  /**
+   * performs the list of operations in batch using the default consistency
+   */
+  def batch(ops:Seq[Operation]):Unit = batch(ops, defaultConsistency)
+
+
+  /**
+   * implicitly coverts a consistency value to an int
+   */
+  private implicit def toThriftConsistency(c:Consistency):ConsistencyLevel = c.thriftValue
 
 
   /**
@@ -230,37 +285,4 @@ class Session(val host:String, val port:Int, val defaultConsistency:Consistency)
    */
   private def now = System.currentTimeMillis
 
-
-  /**
-   * converts the specified key to a column path
-
-  private def toColumnPath(c:ColumnContainer[_, _]):ColumnPath = c match {
-    case key:SuperColumn => val out = new ColumnPath(c.family.value) ; out.setSuper_column(key.value)
-    case key:Key[_ , _]  => new ColumnPath(c.family.value)
-  }
-*/
-
-
-  /**
-   * takes any column name and provides a column path to that column. column
-   * names will be either a standard column which belongs to a standard key,
-   * a super column, or a standard column which belongs to a super key.
-
-  private def toColumnPath(get:Gettable[_]):ColumnPath = {
-    def path(col:Array[Byte], sup:Array[Byte]) = {
-      val out = new ColumnPath(get.family.value)
-      out.setColumn(col)
-      out.setSuper_column(sup)
-      out
-    }
-
-    get match {
-      case sc:SuperColumn => path(null, sc.value)
-      case col:Column[_]  => col.owner match {
-        case owner:SuperColumn => path(col.name, owner.value)
-        case key:StandardKey   => path(col.name, null)
-      }
-    }
-  }
-   */
 }

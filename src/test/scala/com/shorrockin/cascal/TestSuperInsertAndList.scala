@@ -3,7 +3,7 @@ package com.shorrockin.cascal
 import model.{Column, SuperColumn}
 import org.junit.{Test, Assert}
 
-class TestSuperFamily extends EmbeddedCassandra with Logging {
+class TestSuperInsertAndList extends EmbeddedCassandra with Logging {
   import Assert._
   import Conversions._
 

@@ -2,6 +2,9 @@ package com.shorrockin.cascal.model
 
 import java.util.Date
 import org.apache.cassandra.thrift.{ColumnPath, ColumnOrSuperColumn}
+import org.apache.cassandra.thrift.{Column => CassColumn}
+import org.apache.cassandra.thrift.{SuperColumn => CassSuperColumn}
+import com.shorrockin.cascal.Conversions
 
 /**
  * a column is the child component of a super column or a
@@ -27,6 +30,16 @@ case class Column[Owner](val name:Array[Byte],
     owner match {
       case owner:SuperColumn => out.setColumn(name).setSuper_column(owner.value)
       case key:StandardKey   => out.setColumn(name)
+    }
+  }
+
+  lazy val columnOrSuperColumn = {
+    val cosc = new ColumnOrSuperColumn
+    owner match {
+      case key:StandardKey => cosc.setColumn(new CassColumn(name, value, time))
+      case sup:SuperColumn =>
+        val list = Conversions.toJavaList(new CassColumn(name, value, time) :: Nil)
+        cosc.setSuper_column(new CassSuperColumn(sup.value, list))  
     }
   }
 
