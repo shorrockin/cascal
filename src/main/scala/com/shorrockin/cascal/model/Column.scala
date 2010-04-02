@@ -1,7 +1,7 @@
 package com.shorrockin.cascal.model
 
 import java.util.Date
-import org.apache.cassandra.thrift.ColumnOrSuperColumn
+import org.apache.cassandra.thrift.{ColumnPath, ColumnOrSuperColumn}
 
 /**
  * a column is the child component of a super column or a
@@ -22,6 +22,14 @@ case class Column[Owner](val name:Array[Byte],
   val family   = key.family
   val keyspace = key.keyspace
 
+  lazy val columnPath = {
+    val out = new ColumnPath(family.value)
+    owner match {
+      case owner:SuperColumn => out.setColumn(name).setSuper_column(owner.value)
+      case key:StandardKey   => out.setColumn(name)
+    }
+  }
+
 
   /**
    * copy method to create a new instance of this column with a new value and
@@ -31,7 +39,13 @@ case class Column[Owner](val name:Array[Byte],
 
 
   /**
-   * given the cassandra object returned from retrieving this object,
+   * appends a column onto this one forming a list
+   */
+  def ::(other:Column[Owner]):List[Column[Owner]] = other :: this :: Nil
+
+
+  /**
+   *  given the cassandra object returned from retrieving this object,
    * returns an instance of our return type.
    */
   def convertGetResult(colOrSuperCol:ColumnOrSuperColumn):Column[Owner] = {

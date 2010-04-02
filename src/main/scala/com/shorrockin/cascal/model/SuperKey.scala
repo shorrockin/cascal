@@ -1,13 +1,14 @@
 package com.shorrockin.cascal.model
 
-import org.apache.cassandra.thrift.ColumnOrSuperColumn
 import scala.collection.jcl.Conversions.convertList
+import org.apache.cassandra.thrift.{ColumnOrSuperColumn}
 
 case class SuperKey(val value:String, val family:SuperColumnFamily) extends Key[SuperColumn, Map[SuperColumn, Seq[Column[SuperColumn]]]] {
+
   def \(value:Array[Byte]) = new SuperColumn(value, this)
 
   /**
-   * converts a list of super columns to the specified return type
+   *  converts a list of super columns to the specified return type
    */
   def convertListResult(results:Seq[ColumnOrSuperColumn]):Map[SuperColumn, Seq[Column[SuperColumn]]] = {
     var map = Map[SuperColumn, Seq[Column[SuperColumn]]]()

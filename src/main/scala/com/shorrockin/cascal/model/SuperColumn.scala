@@ -1,7 +1,7 @@
 package com.shorrockin.cascal.model
 
-import org.apache.cassandra.thrift.ColumnOrSuperColumn
 import scala.collection.jcl.Conversions.convertList
+import org.apache.cassandra.thrift.{ColumnPath, ColumnParent, ColumnOrSuperColumn}
 
 /**
  * a super standard key the key who's parent is a super key. It acts in much
@@ -16,6 +16,9 @@ case class SuperColumn(val value:Array[Byte], val key:SuperKey) extends Gettable
 
   val family = key.family
   val keyspace = family.keyspace
+
+  lazy val columnParent = new ColumnParent(family.value).setSuper_column(value)
+  lazy val columnPath = new ColumnPath(family.value).setSuper_column(value)
 
   /**
    * given the returned object from the get request, convert

@@ -10,8 +10,8 @@ import com.shorrockin.cascal.Conversions._
 
 import model._
 import collection.jcl.Buffer
-import org.apache.cassandra.thrift.{Cassandra, ColumnPath, ColumnParent}
-import org.apache.cassandra.thrift.{ColumnOrSuperColumn, NotFoundException, ConsistencyLevel}
+import org.apache.cassandra.thrift.Cassandra
+import org.apache.cassandra.thrift.{NotFoundException, ConsistencyLevel}
 
 /**
  * a cascal session is the entry point for interacting with the
@@ -21,14 +21,19 @@ import org.apache.cassandra.thrift.{ColumnOrSuperColumn, NotFoundException, Cons
  */
 class Session(val host:String, val port:Int, val defaultConsistency:Consistency) {
 
-  // TODO - replace with a better way to retrieve the connection
   private val sock    = new TSocket(host, port);
   private val tr      = new TBinaryProtocol(sock);
-  private val client  = new Cassandra.Client(tr,tr);
+
+  val client  = new Cassandra.Client(tr,tr);
   sock.open();
 
+
+  /**
+   * closes this session
+   */
   def close() = sock.close();
 
+  
   /**
    * return the current cluster name of the cassandra instance
    */
@@ -64,7 +69,7 @@ class Session(val host:String, val port:Int, val defaultConsistency:Consistency)
    */
   def get[ResultType](col:Gettable[ResultType], consistency:Consistency):Option[ResultType] = {
     try {
-      val result = client.get(col.keyspace.value, col.key.value, toColumnPath(col), consistency)
+      val result = client.get(col.keyspace.value, col.key.value, col.columnPath, consistency)
       Some(col.convertGetResult(result))
     } catch {
       case nfe:NotFoundException => None
@@ -82,7 +87,7 @@ class Session(val host:String, val port:Int, val defaultConsistency:Consistency)
    * inserts the specified column value
    */
   def insert[E](col:Column[E], consistency:Consistency) = {
-    client.insert(col.keyspace.value, col.key.value, toColumnPath(col), col.value, col.time, consistency)
+    client.insert(col.keyspace.value, col.key.value, col.columnPath, col.value, col.time, consistency)
     col
   }
 
@@ -94,10 +99,17 @@ class Session(val host:String, val port:Int, val defaultConsistency:Consistency)
 
 
   /**
-   * counts the number of columns in the specified column container
+   * inserts a batch of columns all at once, this only incures one call
+
+  def insert(cols:Seq[Column[_]], consistency:Consistency) = {
+  } */
+
+
+  /**
+   *  counts the number of columns in the specified column container
    */
   def count(container:ColumnContainer[_ ,_], consistency:Consistency):Int = {
-    client.get_count(container.keyspace.value, container.key.value, toColumnParent(container), consistency)
+    client.get_count(container.keyspace.value, container.key.value, container.columnParent, consistency)
   }
 
 
@@ -111,7 +123,7 @@ class Session(val host:String, val port:Int, val defaultConsistency:Consistency)
    * removes the specified column container
    */
   def remove(container:ColumnContainer[_, _], consistency:Consistency):Unit = {
-    client.remove(container.keyspace.value, container.key.value, toColumnPath(container), now, consistency)
+    client.remove(container.keyspace.value, container.key.value, container.columnPath, now, consistency)
   }
 
 
@@ -125,7 +137,7 @@ class Session(val host:String, val port:Int, val defaultConsistency:Consistency)
    * removes the specified column container
    */
   def remove(column:Column[_], consistency:Consistency):Unit = {
-    client.remove(column.keyspace.value, column.key.value, toColumnPath(column), now, consistency)
+    client.remove(column.keyspace.value, column.key.value, column.columnPath, now, consistency)
   }
 
 
@@ -140,7 +152,7 @@ class Session(val host:String, val port:Int, val defaultConsistency:Consistency)
    * to determine which columns to return.
    */
   def list[ResultType](container:ColumnContainer[_, ResultType], predicate:Predicate, consistency:Consistency):ResultType = {
-    val results = client.get_slice(container.keyspace.value, container.key.value, toColumnParent(container), predicate.slicePredicate, consistency)
+    val results = client.get_slice(container.keyspace.value, container.key.value, container.columnParent, predicate.slicePredicate, consistency)
     container.convertListResult(convertList(results))
   }
 
@@ -168,7 +180,7 @@ class Session(val host:String, val port:Int, val defaultConsistency:Consistency)
       val firstKey   = keys(0)
       val keyspace   = firstKey.keyspace
       val keyStrings = keys.map { _.value }
-      val results    = client.multiget_slice(keyspace.value, keyStrings, toColumnParent(firstKey), predicate.slicePredicate, consistency)
+      val results    = client.multiget_slice(keyspace.value, keyStrings, firstKey.columnParent, predicate.slicePredicate, consistency)
 
       def locate(str:String) = (keys.find { _.value.equals(str) }).get
       var out = Map[Key[ColumnType, ListType], ListType]()
@@ -205,11 +217,12 @@ class Session(val host:String, val port:Int, val defaultConsistency:Consistency)
 
   /**
    * converts a column container to a parent structure
-   */
+
   private def toColumnParent(col:ColumnContainer[_, _]):ColumnParent = col match {
     case key:SuperColumn => val out = new ColumnParent(col.family.value) ; out.setSuper_column(key.value)
     case key:Key[_ , _]  => new ColumnParent(col.family.value)
   }
+  */
 
 
   /**
@@ -220,18 +233,19 @@ class Session(val host:String, val port:Int, val defaultConsistency:Consistency)
 
   /**
    * converts the specified key to a column path
-   */
+
   private def toColumnPath(c:ColumnContainer[_, _]):ColumnPath = c match {
     case key:SuperColumn => val out = new ColumnPath(c.family.value) ; out.setSuper_column(key.value)
     case key:Key[_ , _]  => new ColumnPath(c.family.value)
   }
+*/
 
 
   /**
    * takes any column name and provides a column path to that column. column
    * names will be either a standard column which belongs to a standard key,
    * a super column, or a standard column which belongs to a super key.
-   */
+
   private def toColumnPath(get:Gettable[_]):ColumnPath = {
     def path(col:Array[Byte], sup:Array[Byte]) = {
       val out = new ColumnPath(get.family.value)
@@ -248,4 +262,5 @@ class Session(val host:String, val port:Int, val defaultConsistency:Consistency)
       }
     }
   }
+   */
 }

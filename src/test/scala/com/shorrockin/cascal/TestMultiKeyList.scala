@@ -16,7 +16,7 @@ class TestMultiKeyList extends EmbeddedCassandra {
     val key2 = populate("Test" \ "Standard" \ UUID(), session, 1)
     val key3 = populate("Test" \ "Standard" \ UUID(), session, 2)
 
-    val results = session.list(key1 :: key3 :: Nil)
+    val results = session.list(key1 :: key3)
     assertEquals(2, results.size) // does the map have 2 keys?
     assertEquals(3, results(key1).size) // does key1 have 3 columns?
     assertEquals(2, results(key3).size) // does key3 have 2 columns?
@@ -41,7 +41,7 @@ class TestMultiKeyList extends EmbeddedCassandra {
     val key3 = populate("Test" \ "Standard" \ UUID(), session, 2)
 
     // predicate is applied to the columns
-    var results = session.list(key1 :: key2 :: key3 :: Nil, RangePredicate(Order.Descending, 2))
+    var results = session.list(key1 :: key2 :: key3, RangePredicate(Order.Descending, 2))
     assertEquals(3, results.size)
     assertEquals(2, results(key1).size)
     assertEquals(1, results(key2).size)
@@ -49,7 +49,7 @@ class TestMultiKeyList extends EmbeddedCassandra {
 
     // try out a column predicate
     val columns = List(bytes("col-1"), bytes("col-2"))
-    results = session.list(key1 :: key2 :: key3 :: Nil, ColumnPredicate(columns))
+    results = session.list(key1 :: key2 :: key3, ColumnPredicate(columns))
     assertEquals(3, results.size)
     assertEquals(2, results(key1).size)
     assertEquals(0, results(key2).size)

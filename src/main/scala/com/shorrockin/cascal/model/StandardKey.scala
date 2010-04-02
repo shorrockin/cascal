@@ -1,6 +1,6 @@
 package com.shorrockin.cascal.model
 
-import org.apache.cassandra.thrift.ColumnOrSuperColumn
+import org.apache.cassandra.thrift.{ColumnParent, ColumnOrSuperColumn}
 
 /**
  * implementation of a standard key, which is an object which can be thought
@@ -11,6 +11,7 @@ import org.apache.cassandra.thrift.ColumnOrSuperColumn
  */
 case class StandardKey(val value:String, val family:StandardColumnFamily) extends Key[Column[StandardKey], Seq[Column[StandardKey]]]
                                                                              with StandardColumnContainer[Column[StandardKey], Seq[Column[StandardKey]]] {
+
   def \(name:Array[Byte]) = new Column(name, this)
   def \(name:Array[Byte], value:Array[Byte]) = new Column(name, value, this)
   def \(name:Array[Byte], value:Array[Byte], time:Long) = new Column(name, value, time, this)

@@ -1,6 +1,6 @@
 package com.shorrockin.cascal.model
 
-import org.apache.cassandra.thrift.ColumnOrSuperColumn
+import org.apache.cassandra.thrift.{ColumnParent, ColumnPath, ColumnOrSuperColumn}
 
 /**
  * defines a cassandra object which houses a collection of columns. Generally
@@ -17,6 +17,9 @@ trait ColumnContainer[ColumnType, ListType] {
   val family:ColumnFamily[_]
   val key:Key[_, _]
   val keyspace:Keyspace
+  val columnPath:ColumnPath
+  val columnParent:ColumnParent
 
   def convertListResult(results:Seq[ColumnOrSuperColumn]):ListType
+
 }
