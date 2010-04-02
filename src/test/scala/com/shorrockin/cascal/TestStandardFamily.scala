@@ -25,9 +25,9 @@ class TestStandardFamily extends EmbeddedCassandra with Logging {
 
     val column = get(key \ "Column-1")
     assertNotNull(column)
-    assertEquals("Value-1", string(column.value))
-    assertEquals("Column-1", string(column.name))    
-    log.debug("get 'Column-1' returned: " + string(column))
+    assertEquals("Value-1", string(column.get.value))
+    assertEquals("Column-1", string(column.get.name))
+    log.debug("get 'Column-1' returned: " + string(column.get))
 
     val columnCount = count(key)
     assertEquals(4, columnCount)

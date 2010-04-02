@@ -9,9 +9,9 @@ import java.util.{List => JList}
 import com.shorrockin.cascal.Conversions._
 
 import model._
-import org.apache.cassandra.thrift.{Column => CasColumn}
-import org.apache.cassandra.thrift.{Cassandra, ColumnPath, ColumnParent, ColumnOrSuperColumn, ConsistencyLevel}
 import collection.jcl.Buffer
+import org.apache.cassandra.thrift.{Cassandra, ColumnPath, ColumnParent}
+import org.apache.cassandra.thrift.{ColumnOrSuperColumn, NotFoundException, ConsistencyLevel}
 
 /**
  * a cascal session is the entry point for interacting with the
@@ -62,16 +62,20 @@ class Session(val host:String, val port:Int, val defaultConsistency:Consistency)
   /**
    *  returns the column value for the specified column
    */
-  def get[ResultType](col:Gettable[ResultType], consistency:Consistency):ResultType = {
-    val result = client.get(col.keyspace.value, col.key.value, toColumnPath(col), consistency)
-    col.convertGetResult(result)
+  def get[ResultType](col:Gettable[ResultType], consistency:Consistency):Option[ResultType] = {
+    try {
+      val result = client.get(col.keyspace.value, col.key.value, toColumnPath(col), consistency)
+      Some(col.convertGetResult(result))
+    } catch {
+      case nfe:NotFoundException => None
+    }
   }
 
   
   /**
    * returns the column value for the specified column, using the default consistency
    */
-  def get[ResultType](col:Gettable[ResultType]):ResultType = get(col, defaultConsistency)
+  def get[ResultType](col:Gettable[ResultType]):Option[ResultType] = get(col, defaultConsistency)
 
 
   /**
@@ -102,6 +106,33 @@ class Session(val host:String, val port:Int, val defaultConsistency:Consistency)
    */
   def count(container:ColumnContainer[_, _]):Int = count(container, defaultConsistency)
 
+
+  /**
+   * removes the specified column container
+   */
+  def remove(container:ColumnContainer[_, _], consistency:Consistency):Unit = {
+    client.remove(container.keyspace.value, container.key.value, toColumnPath(container), now, consistency)
+  }
+
+
+  /**
+   * removes the specified column container using the default consistency
+   */
+  def remove(container:ColumnContainer[_, _]):Unit = remove(container, defaultConsistency)
+
+
+  /**
+   * removes the specified column container
+   */
+  def remove(column:Column[_], consistency:Consistency):Unit = {
+    client.remove(column.keyspace.value, column.key.value, toColumnPath(column), now, consistency)
+  }
+
+
+  /**
+   * removes the specified column container using the default consistency
+   */
+  def remove(column:Column[_]):Unit = remove(column, defaultConsistency)
 
 
   /**
@@ -180,8 +211,24 @@ class Session(val host:String, val port:Int, val defaultConsistency:Consistency)
     case key:Key[_ , _]  => new ColumnParent(col.family.value)
   }
 
+
   /**
-   *  takes any column name and provides a column path to that column. column
+   * retuns the current time in milliseconds
+   */
+  private def now = System.currentTimeMillis
+
+
+  /**
+   * converts the specified key to a column path
+   */
+  private def toColumnPath(c:ColumnContainer[_, _]):ColumnPath = c match {
+    case key:SuperColumn => val out = new ColumnPath(c.family.value) ; out.setSuper_column(key.value)
+    case key:Key[_ , _]  => new ColumnPath(c.family.value)
+  }
+
+
+  /**
+   * takes any column name and provides a column path to that column. column
    * names will be either a standard column which belongs to a standard key,
    * a super column, or a standard column which belongs to a super key.
    */

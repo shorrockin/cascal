@@ -27,11 +27,11 @@ class TestSuperFamily extends EmbeddedCassandra with Logging {
 
     var column = get(column1)
     assertNotNull(column)
-    assertEquals("Value-1", string(column.value))
-    assertEquals("Column-1", string(column.name))
-    log.debug("get 'Column-1' returned: " + string(column))
+    assertEquals("Value-1", string(column.get.value))
+    assertEquals("Column-1", string(column.get.name))
+    log.debug("get 'Column-1' returned: " + string(column.get))
 
-    var columns = get(superColumn1)
+    var columns = get(superColumn1).get
     var values = columns.map { (c) => string(c.value) }
     assertEquals(3, columns.size)
     assertTrue(values.contains("Value-1"))
