@@ -3,7 +3,8 @@ package com.shorrockin.cascal
 import org.apache.cassandra.thrift.CassandraDaemon
 import org.apache.cassandra.config.DatabaseDescriptor
 import java.io.File
-
+import java.net.ConnectException
+import org.apache.thrift.transport.{TTransportException, TSocket}
 
 
 /**
@@ -52,6 +53,21 @@ object EmbeddedCassandra extends Logging {
       val daemon = new CassandraDaemonThread
       daemon.start
 
+      // try to make sockets until the server opens up - there has to be a better
+      // way - just not sure what it is.
+      val socket = new TSocket("localhost", 9160);
+      var opened = false
+      while (!opened) {
+        try {
+          socket.open()
+          opened = true
+          socket.close()
+        } catch {
+          case e:TTransportException => /* ignore */
+          case e:ConnectException => /* ignore */
+        }
+      }
+
       initialized = true
     }
   }
@@ -67,12 +83,19 @@ class CassandraDaemonThread extends Thread("CassandraDaemonThread") with Logging
 
   setDaemon(true)
 
+  /**
+   * starts the server and blocks until it has
+   * completed booting up.
+   */
+  def startServer = {
+
+  }
+
   override def run:Unit = {
     log.debug("initializing cassandra daemon")
     daemon.init(new Array[String](0))
     log.debug("starting cassandra daemon")
     daemon.start
-    Thread.sleep(1000)
   }
 
   def close():Unit = {

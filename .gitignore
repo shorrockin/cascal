@@ -1,3 +1,4 @@
 target/
 .idea
 cascal.iml
+cassandra.home.unit-tests/
