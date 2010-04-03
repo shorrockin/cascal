@@ -11,7 +11,7 @@ class TestMultiKeyList extends EmbeddedCassandra {
   import Assert._
   import Conversions._
 
-  @Test def testStandardMultiKeyRetrieval = withSession { (session) =>
+  @Test def testStandardMultiKeyRetrieval = borrow { (session) =>
     val key1 = populate("Test" \ "Standard" \ UUID(), session, 3)
     val key2 = populate("Test" \ "Standard" \ UUID(), session, 1)
     val key3 = populate("Test" \ "Standard" \ UUID(), session, 2)
@@ -35,7 +35,7 @@ class TestMultiKeyList extends EmbeddedCassandra {
     assertTrue(key2Values.contains("val-1"))
   }
 
-  @Test def testStandardMultiKeyPredicateRetrieval = withSession { (session) =>
+  @Test def testStandardMultiKeyPredicateRetrieval = borrow { (session) =>
     val key1 = populate("Test" \ "Standard" \ UUID(), session, 3)
     val key2 = populate("Test" \ "Standard" \ UUID(), session, 1)
     val key3 = populate("Test" \ "Standard" \ UUID(), session, 2)
@@ -57,7 +57,7 @@ class TestMultiKeyList extends EmbeddedCassandra {
   }
 
 
-  @Test def testSuperMultiKeyPredicateRetrieval = withSession { (session) =>
+  @Test def testSuperMultiKeyPredicateRetrieval = borrow { (session) =>
     val key1 = populate("Test" \\ "Super" \ UUID(), session, 2, 3)
     val key2 = populate("Test" \\ "Super" \ UUID(), session, 3, 2)
     val key3 = populate("Test" \\ "Super" \ UUID(), session, 1, 1)

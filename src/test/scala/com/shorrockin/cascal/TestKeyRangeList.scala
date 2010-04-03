@@ -7,7 +7,7 @@ class TestKeyRangeList extends EmbeddedCassandra {
   import Assert._
   import Conversions._
 
-  @Test def testKeyRangeList = withSession { (s) =>
+  @Test def testKeyRangeList = borrow { (s) =>
     val key1 = "Test" \ "Standard" \ "1"
     val key2 = "Test" \ "Standard" \ "2"
     val key3 = "Test" \ "Standard" \ "3"

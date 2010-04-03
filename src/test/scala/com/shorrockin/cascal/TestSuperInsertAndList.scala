@@ -7,7 +7,7 @@ class TestSuperInsertAndList extends EmbeddedCassandra with Logging {
   import Assert._
   import Conversions._
 
-  @Test def testSuperFamily = withSession { (session) =>
+  @Test def testSuperFamily = borrow { (session) =>
     import session._
 
     val key          = "Test" \\ "Super" \ "1"

@@ -12,13 +12,9 @@ import org.apache.thrift.transport.{TTransportException, TSocket}
  * cassandra into a unit test
  */
 trait EmbeddedCassandra extends Logging {
-  import Utils._
-
-  def withSession(f:(Session) => Unit) = {
+  def borrow(f:(Session) => Unit) = {
     EmbeddedCassandra.init
-    val session = new Session("localhost", 9160, 1000, Consistency.One)
-    session.open
-    manage(session) { f(session) }
+    EmbeddedCassandra.pool.borrow(f)
   }
 }
 
@@ -28,6 +24,10 @@ trait EmbeddedCassandra extends Logging {
 object EmbeddedCassandra extends Logging {
   import Utils._
   var initialized = false
+
+  val hosts  = Host("localhost", 9160, 250) :: Nil
+  val params = new PoolParams(10, ExhaustionPolicy.Fail, 500L, 6, 2)
+  lazy val pool = new SessionPool(hosts, params, Consistency.One)
 
   def init = synchronized {
     if (!initialized) {

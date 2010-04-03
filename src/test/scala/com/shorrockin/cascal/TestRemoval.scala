@@ -9,7 +9,7 @@ class TestRemoval extends EmbeddedCassandra {
   import Conversions._
   import Assert._
 
-  @Test def testKeyRemoval = withSession { (s) =>
+  @Test def testKeyRemoval = borrow { (s) =>
     val std = s.insert("Test" \ "Standard" \ UUID() \ ("Column", "Value"))
     val sup = s.insert("Test" \\ "Super" \ "SuperKey" \ UUID() \ ("Column", "Value"))
 
@@ -20,7 +20,7 @@ class TestRemoval extends EmbeddedCassandra {
     assertEquals(None, s.get(sup))
   }
 
-  @Test def testColumnRemoval = withSession { (s) =>
+  @Test def testColumnRemoval = borrow { (s) =>
     val std = s.insert("Test" \ "Standard" \ UUID() \ ("Column", "Value"))
     val sup = s.insert("Test" \\ "Super" \ "SuperKey" \ UUID() \ ("Column", "Value"))
 

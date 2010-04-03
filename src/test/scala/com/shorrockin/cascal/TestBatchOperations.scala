@@ -7,7 +7,7 @@ class TestBatchOperations extends EmbeddedCassandra {
   import Conversions._
   import Assert._
 
-  @Test def testStandardBatchInsertion = withSession { (s) =>
+  @Test def testStandardBatchInsertion = borrow { (s) =>
     val key  = "Test" \ "Standard" \ UUID()
     val col1 = key \ ("Column-1", "Value-1")
     val col2 = key \ ("Column-2", "Value-2")
@@ -18,7 +18,7 @@ class TestBatchOperations extends EmbeddedCassandra {
     assertEquals(3, s.list(col1.owner).size)
   }
 
-  @Test def testSuperBatchInsertion = withSession { (s) =>
+  @Test def testSuperBatchInsertion = borrow { (s) =>
     val key1 = "Test" \\ "Super" \ UUID()
     val key2 = "Test" \\ "Super" \ UUID()
     val sc1  = key1 \ UUID()
@@ -41,7 +41,7 @@ class TestBatchOperations extends EmbeddedCassandra {
     assertEquals(3, combined.toList.size)
   }
 
-  @Test def testStandardBatchDelete = withSession { (s) =>
+  @Test def testStandardBatchDelete = borrow { (s) =>
     val key  = "Test" \ "Standard" \ UUID()
     val col1 = key \ ("Column-1", "Value-1")
     val col2 = key \ ("Column-2", "Value-2")
@@ -60,7 +60,7 @@ class TestBatchOperations extends EmbeddedCassandra {
     assertEquals("Value-4", string(s.get(col4).get.value))
   }
 
-  @Test def testBatchSuperDelete = withSession { (s) =>
+  @Test def testBatchSuperDelete = borrow { (s) =>
     val key1 = "Test" \\ "Super" \ UUID()
     val sc1  = key1 \ UUID()
     val sc2  = key1 \ UUID()

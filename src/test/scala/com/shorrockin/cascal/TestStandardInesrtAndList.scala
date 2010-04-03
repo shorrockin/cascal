@@ -8,7 +8,7 @@ class TestStandardInesrtAndList extends EmbeddedCassandra with Logging {
   import Assert._
   import Conversions._
 
-  @Test def testStandardFunctions = withSession { (session) =>
+  @Test def testStandardFunctions = borrow { (session) =>
     import session._
 
     log.debug("Cluster Name: " + clusterName)
