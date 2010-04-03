@@ -16,7 +16,8 @@ trait EmbeddedCassandra extends Logging {
 
   def withSession(f:(Session) => Unit) = {
     EmbeddedCassandra.init
-    val session = new Session("localhost", 9160, Consistency.One)
+    val session = new Session("localhost", 9160, 1000, Consistency.One)
+    session.open
     manage(session) { f(session) }
   }
 }

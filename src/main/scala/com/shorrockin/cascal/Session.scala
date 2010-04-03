@@ -17,21 +17,32 @@ import java.util.{Map => JMap, List => JList, HashMap, ArrayList}
  *
  * @author Chris Shorrock
  */
-class Session(val host:String, val port:Int, val defaultConsistency:Consistency) {
+class Session(val host:String, val port:Int, val timeout:Int, val defaultConsistency:Consistency) {
 
-  private val sock    = new TSocket(host, port);
-  private val tr      = new TBinaryProtocol(sock);
+  private val sock = new TSocket(host, port, timeout)
+  private val tr   = new TBinaryProtocol(sock)
 
-  val client  = new Cassandra.Client(tr,tr);
-  sock.open();
+  val client  = new Cassandra.Client(tr,tr)
+
+
+  /**
+   * opens the socket
+   */
+  def open() = sock.open()
 
 
   /**
    * closes this session
    */
-  def close() = sock.close();
+  def close() = sock.close()
 
-  
+
+  /**
+   * returns true if this session is open
+   */
+  def isOpen = sock.isOpen
+
+
   /**
    * return the current cluster name of the cassandra instance
    */
