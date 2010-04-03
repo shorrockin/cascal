@@ -6,7 +6,7 @@ import org.junit.{Assert, Test}
  * really simple test to ensure that basic path composition works
  */
 class TestPathComposition {
-  import com.shorrockin.cascal.Conversions._
+  import com.shorrockin.cascal.utils.Conversions._
   import Assert._
 
   @Test def ensureCanComposeStandardPath() {

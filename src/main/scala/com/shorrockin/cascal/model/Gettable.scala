@@ -7,7 +7,7 @@ import org.apache.cassandra.thrift.{ColumnPath, ColumnOrSuperColumn}
  * method.
  *
  * @author Chris Shorrock
- * @type Result determines the type of object returned when this
+ * @param Result determines the type of object returned when this
  * column is looked up through the session get method.
  */
 trait Gettable[Result] extends ByteValue {

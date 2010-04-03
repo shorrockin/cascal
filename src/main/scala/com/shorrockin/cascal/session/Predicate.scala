@@ -1,6 +1,7 @@
-package com.shorrockin.cascal
+package com.shorrockin.cascal.session
 
 import org.apache.cassandra.thrift.{SliceRange, SlicePredicate}
+import com.shorrockin.cascal.utils.Conversions
 
 /**
  * a predicate defines a function that is applied to a result set to limit
@@ -16,6 +17,8 @@ trait Predicate {
 /**
  * defines a column predicate which is a type of predicate which limits
  * the results to the columns specified
+ *
+ * @author Chris Shorrock
  */
 case class ColumnPredicate(values:Seq[Array[Byte]]) extends Predicate {
   val slicePredicate = new SlicePredicate()
@@ -32,6 +35,8 @@ object RangePredicate {
 
 /**
  * a type of predicate which allows you to specify a range of values
+ *
+ * @author Chris Shorrock
  */
 class RangePredicate(start:Option[Array[Byte]], end:Option[Array[Byte]], order:Order, limit:Option[Int]) extends Predicate {
   val emptyBytes = new Array[Byte](0)

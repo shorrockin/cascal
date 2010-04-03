@@ -1,11 +1,14 @@
-package com.shorrockin.cascal
+package com.shorrockin.cascal.session
 
 import org.apache.cassandra.thrift.ConsistencyLevel
 
 /**
  * object containing all the types of consistencies support by cassandra
+ *
+ * @author Chris Shorrock
  */
 object Consistency {
+
   /**
    * WRITE: Ensure nothing. A write happens asynchronously in background
    *
@@ -58,6 +61,8 @@ object Consistency {
 /**
  * trait to define the various consistency levels supported by
  * cassandra.
+ *
+ * @author Chris Shorrock
  */
 trait Consistency {
   def thriftValue:ConsistencyLevel

@@ -2,6 +2,8 @@ package com.shorrockin.cascal
 
 import model.Column
 import org.junit.{Assert, Test}
+import session.{ColumnPredicate, Delete, Insert}
+import utils.{UUID, Conversions}
 
 class TestBatchOperations extends CassandraTestPool {
   import Conversions._

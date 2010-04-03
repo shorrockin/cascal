@@ -1,4 +1,4 @@
-package com.shorrockin.cascal
+package com.shorrockin.cascal.utils
 
 /**
  * utility function used to wrap a java iterator.

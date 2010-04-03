@@ -2,6 +2,7 @@ package com.shorrockin.cascal
 
 import model.{Column, SuperColumn}
 import org.junit.{Test, Assert}
+import utils.{UUID, Conversions, Logging}
 
 class TestSuperInsertAndList extends CassandraTestPool with Logging {
   import Assert._

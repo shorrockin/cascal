@@ -1,12 +1,13 @@
 package com.shorrockin.cascal
 
 import org.junit.{Assert, Test}
+import com.shorrockin.cascal.utils.UUID
 
 /**
  * tests session removal
  */
 class TestRemoval extends CassandraTestPool {
-  import Conversions._
+  import com.shorrockin.cascal.utils.Conversions._
   import Assert._
 
   @Test def testKeyRemoval = borrow { (s) =>

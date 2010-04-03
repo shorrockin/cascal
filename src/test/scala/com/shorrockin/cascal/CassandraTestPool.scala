@@ -5,8 +5,8 @@ import org.apache.cassandra.config.DatabaseDescriptor
 import java.io.File
 import java.net.ConnectException
 import org.apache.thrift.transport.{TTransportException, TSocket}
-
-
+import session._
+import utils.{Utils, Logging}
 /**
  * trait which mixes in the functionality necessary to embed
  * cassandra into a unit test
@@ -31,7 +31,7 @@ object EmbeddedTestCassandra extends Logging {
 
   def init = synchronized {
     if (!initialized) {
-      val homeDirectory = new File("cassandra.home.unit-tests")
+      val homeDirectory = new File("target/cassandra.home.unit-tests")
       delete(homeDirectory)
       homeDirectory.mkdirs
 

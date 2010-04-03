@@ -1,6 +1,6 @@
 package com.shorrockin.cascal.model
 
-import org.apache.cassandra.thrift.{ColumnParent, ColumnOrSuperColumn}
+import org.apache.cassandra.thrift.{ColumnOrSuperColumn}
 
 /**
  * implementation of a standard key, which is an object which can be thought

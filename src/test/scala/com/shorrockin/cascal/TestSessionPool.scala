@@ -1,8 +1,8 @@
 package com.shorrockin.cascal
 
 import org.junit.Test
-
-
+import session._
+import utils.{UUID, Conversions}
 class TestSessionPool {
   import Conversions._
 

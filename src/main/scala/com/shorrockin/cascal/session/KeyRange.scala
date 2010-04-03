@@ -1,4 +1,4 @@
-package com.shorrockin.cascal
+package com.shorrockin.cascal.session
 
 import org.apache.cassandra.thrift.{KeyRange => CassKeyRange}
 

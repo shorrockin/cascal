@@ -1,7 +1,7 @@
-package com.shorrockin.cascal
+package com.shorrockin.cascal.utils
 
 import java.util.{UUID => JavaUUID}
-import com.eaio.uuid.{UUID => EaioUUID}
+import _root_.com.eaio.uuid.{UUID => EaioUUID}
 
 /**
  * utility method for working with, and creating uuids, suitable in a way

@@ -1,6 +1,5 @@
-package com.shorrockin.cascal
+package com.shorrockin.cascal.utils
 
-import org.apache.cassandra.io.util.FileUtils
 import _root_.scala.io.Source
 import java.io.{FileWriter, InputStream, FileOutputStream, File}
 

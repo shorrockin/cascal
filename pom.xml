@@ -4,9 +4,11 @@
 
     <groupId>com.shorrockin</groupId>
     <artifactId>cascal</artifactId>
-    <packaging>pom</packaging>
+    <packaging>jar</packaging>
     <version>1.0-SNAPSHOT</version>
     <name>Cascal - Simple Cassandra Scala Client Library</name>
+    <inceptionYear>2010</inceptionYear>
+    <url>http://github.com/shorrockin/cascal</url>
 
     <developers>
         <developer>
@@ -15,12 +17,9 @@
         </developer>
     </developers>
 
-    <inceptionYear>2010</inceptionYear>
-
     <properties>
         <java.compile.version>1.5</java.compile.version>
         <scala.version>2.7.7</scala.version>
-        <junit.version>4.6</junit.version>
     </properties>
 
     <build>
@@ -59,6 +58,7 @@
                     </execution>
                 </executions>
                 <configuration>
+                    <!-- no luck <vscaladocVersion>1.1</vscaladocVersion> --> 
                     <scalaVersion>${scala.version}</scalaVersion>
                     <args>
                         <arg>-target:jvm-${java.compile.version}</arg>
@@ -110,6 +110,26 @@
         </plugins>
     </build>
 
+    <distributionManagement>
+        <repository>
+            <id>shorrockin.repository</id>
+            <name>Shorrockin Release Repo</name>
+            <url>scpexe://maven@shorrockin.com/www/maven</url>
+            <uniqueVersion>false</uniqueVersion>
+        </repository>
+        <snapshotRepository>
+            <id>shorrockin.repository</id>
+            <name>Shorrockin Snapshot Repo</name>
+            <url>scpexe://maven@shorrockin.com/www/maven</url>
+            <uniqueVersion>false</uniqueVersion>
+        </snapshotRepository>
+        <site>
+            <id>shorrockin.repository</id>
+            <name>Shorrockin Site Deploy</name>
+            <url>scpexe://maven@shorrockin.com/www/cascal</url>
+        </site>
+    </distributionManagement>
+
     <repositories>
         <repository>
             <id>scala-tools.org</id>
@@ -122,13 +142,13 @@
             <name>Scala-Tools Maven2 Repository</name>
             <url>http://scala-tools.org/repo-releases/</url>
         </repository>
-<!--
+
         <repository>
             <id>shorrockin.com</id>
             <name>Shorrockin Repository</name>
-            <url>http://10.104.216.39:9001/maven/</url>
+            <url>http://maven.shorrockin.com/</url>
         </repository>
--->        
+
     </repositories>
 
     <dependencies>
@@ -145,7 +165,13 @@
         </dependency>
 
         <dependency>
-            <groupId>org.apache</groupId>
+            <groupId>com.eaio.uuid</groupId>
+            <artifactId>uuid</artifactId>
+            <version>3.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.cassandra</groupId>
             <artifactId>cassandra</artifactId>
             <version>0.6.0-beta3</version>
         </dependency>
@@ -183,16 +209,9 @@
         <!-- test scoped dependencies below -->
 
         <dependency>
-            <groupId>org.easymock</groupId>
-            <artifactId>easymockclassextension</artifactId>
-            <version>2.4</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>${junit.version}</version>
+            <version>4.6</version>
             <scope>test</scope>
         </dependency>
 
@@ -218,7 +237,7 @@
         </dependency>
 
         <dependency>
-            <groupId>com.google</groupId>
+            <groupId>com.google.clhm</groupId>
             <artifactId>clhm-production</artifactId>
             <version>1.0</version>
             <scope>test</scope>

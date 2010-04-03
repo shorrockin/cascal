@@ -2,6 +2,8 @@ package com.shorrockin.cascal
 
 import model.{SuperKey, StandardKey, Key}
 import org.junit.{Assert, Test}
+import session.{Session, ColumnPredicate, Order, RangePredicate}
+import utils.{UUID, Conversions}
 
 /**
  * tests our ability to list multiple keys, translates to a cassandra

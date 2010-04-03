@@ -1,12 +1,14 @@
 package com.shorrockin.cascal.model
 
-import scala.collection.jcl.Conversions.convertList
 import org.apache.cassandra.thrift.{ColumnPath, ColumnParent, ColumnOrSuperColumn}
+import scala.collection.jcl.Conversions.convertList
 
 /**
  * a super standard key the key who's parent is a super key. It acts in much
  * the same fashion as a standard key except for the parent structure is a SuperKey,
  * and not a StandardColumnFamily
+ *
+ * @author Chris Shorrock
  */
 case class SuperColumn(val value:Array[Byte], val key:SuperKey) extends Gettable[Seq[Column[SuperColumn]]]()
                                                                    with StandardColumnContainer[Column[SuperColumn], Seq[Column[SuperColumn]]] {

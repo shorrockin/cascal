@@ -1,7 +1,7 @@
-package com.shorrockin.cascal
+package com.shorrockin.cascal.session
 
-import model._
 import org.apache.cassandra.thrift.{Deletion, Mutation}
+import com.shorrockin.cascal.model._
 
 /**
  * defines an operation that can be executed in parallel with a collection
@@ -31,6 +31,9 @@ case class Insert(val column:Column[_]) extends Operation {
 }
 
 
+/**
+ * companion class for simplified deletion creation.
+ */
 case object Delete {
   def apply(container:ColumnContainer[_, _], predicate:Predicate) = new Delete(container, predicate)
   def apply(container:ColumnContainer[_, _]) = new Delete(container, EmptyPredicate)

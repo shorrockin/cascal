@@ -1,7 +1,8 @@
-package com.shorrockin.cascal
+package com.shorrockin.cascal.session
 
 import org.apache.commons.pool.PoolableObjectFactory
 import org.apache.commons.pool.impl.{GenericObjectPoolFactory, GenericObjectPool}
+import com.shorrockin.cascal.utils.Logging
 
 /**
  * a session pool which maintains a collection of open sessions so that
@@ -97,7 +98,7 @@ case class Host(address:String, port:Int, timeout:Int) {
 
 
 /**
- * defines an exhaustion policy
+ * defines an exhaustion policy used by the cassandra system.
  */
 trait ExhaustionPolicy {
   def value:Byte
@@ -105,7 +106,7 @@ trait ExhaustionPolicy {
 
 
 /**
- * defines the possible values for the exhaustion policy
+ * defines the possible values for the exhaustion policy.
  */
 object ExhaustionPolicy {
   val Fail = new ExhaustionPolicy { val value = GenericObjectPool.WHEN_EXHAUSTED_FAIL }
@@ -115,7 +116,11 @@ object ExhaustionPolicy {
 
 
 /**
- * this class tempts me to upgrade to 2.8.
+ * this class tempts me to upgrade to 2.8. until then it describes, in the
+ * most verbose fashion possible, all the parameters that can be passed into
+ * the session pool.
+ *
+ * @author Chris Shorrock
  */
 case class PoolParams(maxActive:Int,
                       exhaustionPolicy:ExhaustionPolicy,

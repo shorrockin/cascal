@@ -4,11 +4,14 @@ import java.util.Date
 import org.apache.cassandra.thrift.{ColumnPath, ColumnOrSuperColumn}
 import org.apache.cassandra.thrift.{Column => CassColumn}
 import org.apache.cassandra.thrift.{SuperColumn => CassSuperColumn}
-import com.shorrockin.cascal.Conversions
+import com.shorrockin.cascal.utils.Conversions
 
 /**
  * a column is the child component of a super column or a
- * standard key
+ * standard key.
+ *
+ * @author Chris Shorrock
+ * @param Owner the type of object which owns this column
  */
 case class Column[Owner](val name:Array[Byte],
                          val value:Array[Byte],
@@ -58,7 +61,7 @@ case class Column[Owner](val name:Array[Byte],
 
 
   /**
-   *  given the cassandra object returned from retrieving this object,
+   * given the cassandra object returned from retrieving this object,
    * returns an instance of our return type.
    */
   def convertGetResult(colOrSuperCol:ColumnOrSuperColumn):Column[Owner] = {

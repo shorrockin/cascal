@@ -1,9 +1,8 @@
-package com.shorrockin.cascal
+package com.shorrockin.cascal.utils
 
 import java.nio.charset.Charset
 import java.util.{UUID => JavaUUID}
-import collection.jcl.BufferWrapper
-import model.{Column, Keyspace}
+import com.shorrockin.cascal.model.{Column, Keyspace}
 
 /**
  * some implicits to assist with common conversions

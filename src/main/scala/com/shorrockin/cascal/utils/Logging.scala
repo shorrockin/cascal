@@ -1,7 +1,12 @@
-package com.shorrockin.cascal
+package com.shorrockin.cascal.utils
 
 import org.apache.commons.logging.LogFactory
 
+/**
+ * simple logging trait to access the commons logging trait.
+ *
+ * @author Chris Shorrock
+ */
 trait Logging {
   @transient @volatile lazy val log = LogFactory.getLog(this.getClass.getName)
 }

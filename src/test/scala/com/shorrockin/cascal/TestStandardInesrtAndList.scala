@@ -3,6 +3,8 @@ package com.shorrockin.cascal
 import model.Column
 import org.junit.{Assert, Test}
 import java.util.Date
+import session.{ColumnPredicate, RangePredicate}
+import utils.{Conversions, Logging}
 
 class TestStandardInesrtAndList extends CassandraTestPool with Logging {
   import Assert._

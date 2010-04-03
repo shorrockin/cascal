@@ -1,7 +1,8 @@
 package com.shorrockin.cascal.model
 
 /**
- * abstraction of a super column family.
+ * a column family which houses super columns
+ *
  * @author Chris Shorrock
  */
 case class SuperColumnFamily(val value:String, val keyspace:Keyspace) extends ColumnFamily[SuperKey] {

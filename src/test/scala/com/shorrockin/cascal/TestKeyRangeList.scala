@@ -2,6 +2,8 @@ package com.shorrockin.cascal
 
 import model.{ColumnFamily, Key, StandardKey}
 import org.junit.{Assert, Test}
+import session.{Consistency, EmptyPredicate, KeyRange}
+import utils.Conversions
 
 class TestKeyRangeList extends CassandraTestPool {
   import Assert._
@@ -18,7 +20,6 @@ class TestKeyRangeList extends CassandraTestPool {
     insert(key2)
     insert(key3)
     insert(key4)
-
 
     val results = s.list(key1.family, KeyRange("testKeyRangeList-1", "testKeyRangeList-3", 100), EmptyPredicate, Consistency.One)
     assertEquals(3, results.size)

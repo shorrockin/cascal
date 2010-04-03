@@ -8,8 +8,9 @@ import org.apache.cassandra.thrift.{ColumnParent, ColumnPath, ColumnOrSuperColum
  * these house columns, with the SuperKey housing SuperColumns and the other two
  * housing DepStandardColumn.
  *
- * @type ColumnType the type of columns that this container houses.
- * @type ListType when listed, what type of object does it return.
+ * @author Chris Shorrock
+ * @param ColumnType the type of columns that this container houses.
+ * @param ListType when listed, what type of object does it return.
  */
 trait ColumnContainer[ColumnType, ListType] {
   def \(value:Array[Byte]):ColumnType

@@ -1,15 +1,17 @@
-package com.shorrockin.cascal
+package com.shorrockin.cascal.session
 
 
 import org.apache.thrift.transport.TSocket
 import org.apache.thrift.protocol.TBinaryProtocol
-import collection.jcl.Conversions._
-import com.shorrockin.cascal.Conversions._
 
-import model._
 import collection.jcl.Buffer
 import org.apache.cassandra.thrift.{Mutation, Cassandra, NotFoundException, ConsistencyLevel}
 import java.util.{Map => JMap, List => JList, HashMap, ArrayList}
+
+import collection.jcl.Conversions._
+import com.shorrockin.cascal.utils.Conversions._
+
+import com.shorrockin.cascal.model._
 
 /**
  * a cascal session is the entry point for interacting with the
@@ -23,7 +25,6 @@ class Session(val host:String, val port:Int, val timeout:Int, val defaultConsist
   private val tr   = new TBinaryProtocol(sock)
 
   val client  = new Cassandra.Client(tr,tr)
-
 
   /**
    * opens the socket
@@ -59,12 +60,6 @@ class Session(val host:String, val port:Int, val timeout:Int, val defaultConsist
    * returns the version of the cassandra instance
    */
   lazy val version = client.get_string_property("version")
-
-
-  /**
-   * returns a map of tokens from the cassandra instance.
-   */
-  lazy val tokenMap = Map("1" -> "2", "3" -> "4") // in the form of {"token1":"host1","token2":"host2"}
 
 
   /**
@@ -270,8 +265,7 @@ class Session(val host:String, val port:Int, val timeout:Int, val defaultConsist
         mutationList.add(op.mutation)
       }
 
-      // TODO need to do a super column flatten as we'll have multple
-      // of the same super columns in this list
+      // TODO may need to flatten duplicate super columns?
       client.batch_mutate(keyspace.value, keyToFamilyMutations, consistency)
     } else {
       throw new IllegalArgumentException("cannot perform batch operation on 0 length operation sequence")
