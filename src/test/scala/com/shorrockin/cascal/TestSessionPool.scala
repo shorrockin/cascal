@@ -7,7 +7,7 @@ class TestSessionPool {
   import Conversions._
 
   @Test def testSessionPool = {
-    EmbeddedCassandra.init
+    EmbeddedTestCassandra.init
 
     val hosts  = Host("localhost", 9160, 250) :: Host("localhost", 9161, 1)
     val params = new PoolParams(10, ExhaustionPolicy.Fail, 500L, 6, 2)
@@ -15,7 +15,7 @@ class TestSessionPool {
 
     // as long as no exceptions were thrown we passed
     (0 until 10).foreach { index =>
-      pool.borrow { _.count("Test" \ "Standard" \ "1") }
+      pool.borrow { _.count("Test" \ "Standard" \ UUID()) }
     }
 
 

@@ -5,7 +5,7 @@ import org.junit.{Assert, Test}
 /**
  * tests session removal
  */
-class TestRemoval extends EmbeddedCassandra {
+class TestRemoval extends CassandraTestPool {
   import Conversions._
   import Assert._
 

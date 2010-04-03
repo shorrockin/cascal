@@ -11,17 +11,17 @@ import org.apache.thrift.transport.{TTransportException, TSocket}
  * trait which mixes in the functionality necessary to embed
  * cassandra into a unit test
  */
-trait EmbeddedCassandra extends Logging {
+trait CassandraTestPool extends Logging {
   def borrow(f:(Session) => Unit) = {
-    EmbeddedCassandra.init
-    EmbeddedCassandra.pool.borrow(f)
+    EmbeddedTestCassandra.init
+    EmbeddedTestCassandra.pool.borrow(f)
   }
 }
 
 /**
  * maintains the single instance of the cassandra server
  */
-object EmbeddedCassandra extends Logging {
+object EmbeddedTestCassandra extends Logging {
   import Utils._
   var initialized = false
 
@@ -73,7 +73,7 @@ object EmbeddedCassandra extends Logging {
     }
   }
 
-  private def resource(str:String) = classOf[EmbeddedCassandra].getResourceAsStream(str)
+  private def resource(str:String) = classOf[CassandraTestPool].getResourceAsStream(str)
 }
 
 /**

@@ -7,7 +7,7 @@ import org.junit.{Assert, Test}
  * tests our ability to list multiple keys, translates to a cassandra
  * multiget_slice
  */
-class TestMultiKeyList extends EmbeddedCassandra {
+class TestMultiKeyList extends CassandraTestPool {
   import Assert._
   import Conversions._
 
