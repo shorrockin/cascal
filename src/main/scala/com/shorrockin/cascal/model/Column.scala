@@ -69,4 +69,6 @@ case class Column[Owner](val name:Array[Byte],
     Column(col.getName, col.getValue, col.getTimestamp, owner)
   }
 
+  override def toString = "%s \\ Column(name = %s, value = %s, time = %s)".format(owner.toString, name, value, time)
+
 }

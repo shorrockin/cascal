@@ -22,4 +22,6 @@ case class SuperKey(val value:String, val family:SuperColumnFamily) extends Key[
     }
     map
   }
+
+  override def toString = "%s \\ SuperKey(value = %s)".format(family.toString, value)
 }

@@ -8,4 +8,5 @@ package com.shorrockin.cascal.model
  */
 case class StandardColumnFamily(val value:String, val keyspace:Keyspace) extends ColumnFamily[StandardKey] {
   def \(value:String) = new StandardKey(value, this)
+  override def toString = "%s \\ StandardColumnFamily(value = %s)".format(keyspace.toString, value)
 }

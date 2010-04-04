@@ -22,4 +22,6 @@ case class StandardKey(val value:String, val family:StandardColumnFamily) extend
       \(column.getName, column.getValue, column.getTimestamp)
     }
   }
+
+  override def toString = "%s \\ StandardKey(value = %s)".format(family.toString, value)
 }

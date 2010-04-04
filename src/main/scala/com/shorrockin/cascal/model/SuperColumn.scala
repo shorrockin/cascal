@@ -42,4 +42,6 @@ case class SuperColumn(val value:Array[Byte], val key:SuperKey) extends Gettable
       \(column.getName, column.getValue, column.getTimestamp)
     }
   }
+
+  override def toString = "%s \\ SuperColumn(value = %s)".format(key.toString, value)
 }
