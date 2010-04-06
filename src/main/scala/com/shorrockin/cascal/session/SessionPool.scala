@@ -33,6 +33,30 @@ class SessionPool(val hosts:Seq[Host], val params:PoolParams, consistency:Consis
 
 
   /**
+   * closes this pool and releases any resources available to it.
+   */
+  def close() { pool.close }
+
+
+  /**
+   * clears any idle objects sitting in the pool (optional operation)
+   */
+  def clear() { pool.clear }
+
+
+  /**
+   * returns the number of active session connections. 
+   */
+  def active = pool.getNumActive
+
+
+  /**
+   * returns the number of idle session connections
+   */
+  def idle = pool.getNumIdle
+
+
+  /**
    * used to retrieve a session and perform a function using that
    * function.
    */

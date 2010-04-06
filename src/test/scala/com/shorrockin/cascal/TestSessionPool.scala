@@ -1,10 +1,12 @@
 package com.shorrockin.cascal
 
-import org.junit.Test
 import session._
 import utils.{UUID, Conversions}
+import org.junit.{Assert, Test}
+
 class TestSessionPool {
   import Conversions._
+  import Assert._
 
   @Test def testSessionPool = {
     EmbeddedTestCassandra.init
@@ -18,6 +20,8 @@ class TestSessionPool {
       pool.borrow { _.count("Test" \ "Standard" \ UUID()) }
     }
 
-
+    assertEquals(1, pool.idle)
+    pool.close
+    assertEquals(0, pool.idle)
   }
 }
