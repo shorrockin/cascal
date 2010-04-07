@@ -58,7 +58,8 @@ class SessionPool(val hosts:Seq[Host], val params:PoolParams, consistency:Consis
 
   /**
    * used to retrieve a session and perform a function using that
-   * function.
+   * function. This function will clean up the borrowed object after
+   * it has finished. You do not need to manually call "return"
    */
   def borrow[E](f:(Session) => E) {
     var session:Session = null
@@ -70,6 +71,21 @@ class SessionPool(val hosts:Seq[Host], val params:PoolParams, consistency:Consis
       if (null != session) pool.returnObject(session)
     }
   }
+
+
+  /**
+   * retrieves a session. Once the caller has finished with the
+   * session it must be returned to the pool. failure to do so
+   * will result your pool shedding a tear. 
+   */
+  def checkout:Session = pool.borrowObject.asInstanceOf[Session]
+
+
+  /**
+   * returns the session back to the pool. only necessary when a sessio
+   * is retrieved through the checkout methad.
+   */
+  def checkin(session:Session) = pool.returnObject(session)
 
 
   /**
