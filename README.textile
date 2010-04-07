@@ -1,5 +1,4 @@
-Cascal - Cassandra Simplified
-------------------------------------
+h1. Cascal - Cassandra Simplified
 
 Author: Chris Shorrock
 Home Page: http://wiki.github.com/shorrockin/cascal/
@@ -10,7 +9,7 @@ Scala Version: 2.7.7
 Cassandra Version: 0.6.0-beta3
 
 
-Description:
+h2. Description:
 
 Cascal is a simple Cassandra (http://cassandra.apache.org/) library built 
 on the Scala (www.scala-lang.org) language that provides a very consistent
@@ -20,11 +19,13 @@ One of the goals of Cassandra is to make the Thrift library operate in a way
 more conducive with the Scala language. As such when using Cascal you only
 need to used the Cascal libraries.
 
-Please see the Wiki pages at http://github.com/shorrockin/cascal for detailed 
+Please see the Wiki pages at http://wiki.github.com/shorrockin/cascal/ for detailed 
 usage information.
 
-Maven Information:
+h2. Maven Information
 
+<pre>
+<code class="xml">
   <dependencies>
     <dependency>
       <groupId>com.shorrockin</groupId>
@@ -40,3 +41,5 @@ Maven Information:
       <url>http://maven.shorrockin.com/</url>
     </repository>
   </repositories>
+</code>
+</pre>
