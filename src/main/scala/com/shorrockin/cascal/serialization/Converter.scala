@@ -1,7 +1,7 @@
 package com.shorrockin.cascal.serialization
 
 import reflect.Manifest
-import annotations.{Keyspace => AKeySpace, Family => AFamily, Super => ASuper, Key => AKey, Value => AValue, SuperColumn => ASuperColumn}
+import annotations.{Keyspace => AKeySpace, Family => AFamily, Super => ASuper, Key => AKey, Value => AValue, SuperColumn => ASuperColumn, Optional}
 import com.shorrockin.cascal.model._
 import java.lang.annotation.Annotation
 import java.lang.reflect.Constructor
@@ -55,6 +55,17 @@ class Converter(serializers:Map[Class[_], Serializer[_]]) {
           case None    => throw new IllegalArgumentException("unable to find column with name: " + a.value)
           case Some(c) => toObject(paramClass, c.value)
         }
+
+        // optional types are like values except they map to option/some/none so they may or
+        // may not exist. additionally - we get the parameter type from the annotation not
+        // the actual parameter
+        case a:Optional if (paramClass.equals(classOf[Option[_]])) => columnNamed(a.column, columns) match {
+          case None    => None
+          case Some(c) => Some(toObject(a.as, c.value))
+        }
+
+        // anything else throw an exception
+        case _ => throw new IllegalStateException("annonation of: " + paramAnnot + " was not placed in such a manner that it could be used")
       }
     }
 
