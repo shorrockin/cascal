@@ -21,14 +21,22 @@ object Converter extends Converter(Serializer.Default) with Logging {
  * @author Chris Shorrock
  */
 class Converter(serializers:Map[Class[_], Serializer[_]]) {
-  import Converter.log
 
   /**
-   * given a list of columns, assumed to all belong to the same key, creates
+   * converts all the column sequences in the provided map (which is returned from a list
+   * call). and returns a sequence of the specified type.
+   */
+  def apply[T](map:Map[SuperColumn, Seq[Column[SuperColumn]]])(implicit manifest:Manifest[T]):Seq[T] = {
+    map.keySet.toSeq.map { (key) => apply[T](map(key)) }
+  }
+  
+
+  /**
+   *  given a list of columns, assumed to all belong to the same key, creates
    * the object of type T using the annotations present an that class. Uses
    * the serializers to convert values in columns to their appropriate.
    */
-  def toObject[T](columns:Seq[Column[_]])(implicit manifest:Manifest[T]):T = {
+  def apply[T](columns:Seq[Column[_]])(implicit manifest:Manifest[T]):T = {
     val cls        = manifest.erasure
     val ks         = keyspace(cls)
     val superCf    = isSuper(cls)
