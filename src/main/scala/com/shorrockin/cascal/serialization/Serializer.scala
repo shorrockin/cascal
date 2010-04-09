@@ -1,6 +1,7 @@
 package com.shorrockin.cascal.serialization
 
 import com.shorrockin.cascal.utils.Conversions._
+import com.shorrockin.cascal.utils.{UUID => UUIDUtils}
 import java.util.UUID
 import java.util.Date
 
@@ -52,7 +53,7 @@ object StringSerializer extends Serializer[String] {
 
 object UUIDSerializer extends Serializer[UUID] {
   def toBytes(uuid:UUID) = bytes(uuid)
-  def fromBytes(bytes:Array[Byte]) = uuid(bytes)
+  def fromBytes(bytes:Array[Byte]) = UUIDUtils(bytes)
 }
 
 object IntSerializer extends Serializer[Int] {
