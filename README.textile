@@ -11,15 +11,15 @@ Cassandra Version: 0.6.0-beta3
 
 h3. Description:
 
-Cascal is a simple Cassandra:"http://cassandra.apache.org/" library built 
-on the Scala:"www.scala-lang.org" language that provides a very consistent
+Cascal is a simple "Cassandra":http://cassandra.apache.org/ library built 
+on the "Scala":www.scala-lang.org language that provides a very consistent
 and simple means by which you can interact with the Cassandra system.
 
 One of the goals of Cassandra is to make the Thrift library operate in a way
 more conducive with the Scala language. As such when using Cascal you only
 need to used the Cascal libraries.
 
-Please see the wiki pages (here:"http://wiki.github.com/shorrockin/cascal/") for detailed 
+Please see the "wiki pages":http://wiki.github.com/shorrockin/cascal/ for detailed 
 usage information.
 
 h3. Maven Information
