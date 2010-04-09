@@ -78,7 +78,6 @@ class TestSerialization {
 
 
   @Test def testCanConvertObjectToStandardColumnList() {
-
   }
 
 
