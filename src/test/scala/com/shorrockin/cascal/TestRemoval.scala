@@ -1,5 +1,6 @@
 package com.shorrockin.cascal
 
+import testing._
 import org.junit.{Assert, Test}
 import com.shorrockin.cascal.utils.UUID
 

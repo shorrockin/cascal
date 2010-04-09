@@ -1,5 +1,6 @@
 package com.shorrockin.cascal
 
+import testing._
 import model.{SuperKey, StandardKey, Key}
 import org.junit.{Assert, Test}
 import session.{Session, ColumnPredicate, Order, RangePredicate}

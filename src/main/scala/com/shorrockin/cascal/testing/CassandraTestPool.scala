@@ -1,4 +1,4 @@
-package com.shorrockin.cascal
+package com.shorrockin.cascal.testing
 
 import org.apache.cassandra.thrift.CassandraDaemon
 import org.apache.cassandra.config.DatabaseDescriptor

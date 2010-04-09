@@ -1,5 +1,6 @@
 package com.shorrockin.cascal
 
+import testing._
 import session._
 import utils.{UUID, Conversions}
 import org.junit.{Assert, Test}
