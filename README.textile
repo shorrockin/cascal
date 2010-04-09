@@ -11,7 +11,12 @@ h3. Cascal - Cassandra Simplified
 
 h3. Description:
 
-Cascal is a simple "Cassandra":http://cassandra.apache.org/ library built on the "Scala":www.scala-lang.org language that provides a very consistent and simple means by which you can interact with the Cassandra system.
+Cascal is a simple "Cassandra":http://cassandra.apache.org/ library built on the "Scala":www.scala-lang.org language that provides a very consistent and simple means by which you can interact with the Cassandra DB, providing simple means to:
+
+* Insert / List / Get / Delete
+* Batch Insert / Delete
+* Map Seq[Columns] Into Domain Objects
+* Utilize a Session Pool
 
 One of the goals of Cassandra is to make the Thrift library operate in a way more conducive with the Scala language. As such when using Cascal you only need to used the Cascal libraries.
 
