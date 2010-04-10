@@ -77,29 +77,39 @@ class Converter(serializers:Map[Class[_], Serializer[_]]) {
 
       annotation match {
         // if there's a columnsToKey annotation get the first columnsToKey in the columns and return it
-        case k:AKey if (cls.equals(classOf[String])) => columnsToKey(columns).value
+        case k:AKey => cls.equals(classOf[String]) match {
+          case true  => columnsToKey(columns).value
+          case false => throw new IllegalArgumentException("@Key annotation can only be used on a String parameter")
+        }
 
         // if there's a super column annotation get the super column then use the serializers
         // to convert the byte array to the appropriate value.
-        case sc:ASuperColumn if (info.isSuper) => toObject(cls, columnsToSuperColumn(columns).value)
+        case sc:ASuperColumn => info.isSuper match {
+          case true  => toObject(cls, columnsToSuperColumn(columns).value)
+          case false => throw new IllegalArgumentException("@SuperColumn may only exist within class annotated with @Super")
+        }
 
         // if there's a value annotation look up the column with the matching name and then
         // retrieve the value, and convert it as needed.
         case a:AValue => find(a.value, columns) match {
-          case None    => throw new IllegalArgumentException("unable to find column with name: " + a.value)
+          case None    => throw new IllegalArgumentException("Unable to find column with name: " + a.value)
           case Some(c) => toObject(cls, c.value)
         }
 
         // optional types are like values except they map to option/some/none so they may or
         // may not exist. additionally - we get the parameter type from the annotation not
         // the actual parameter
-        case a:Optional if (cls.equals(classOf[Option[_]])) => find(a.column, columns) match {
-          case None    => None
-          case Some(c) => Some(toObject(a.as, c.value))
+        case a:Optional => cls.equals(classOf[Option[_]]) match {
+          case true => find(a.column, columns) match {
+            case None    => None
+            case Some(c) => Some(toObject(a.as, c.value))
+          }
+          case false => throw new IllegalArgumentException("@Optional may only be used on a Option[_] parameter")
         }
 
+
         // anything else throw an exception
-        case _ => throw new IllegalStateException("annonation of: " + annotation + " was not placed in such a manner that it could be used")
+        case _ => throw new IllegalStateException("annonation of: " + annotation + " was not placed in such a manner that it could be used on type: " + cls)
       }
     }
 

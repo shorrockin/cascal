@@ -92,7 +92,7 @@ class SessionPool(val hosts:Seq[Host], val params:PoolParams, consistency:Consis
    * used to create sessions
    */
   private object SessionFactory extends PoolableObjectFactory with Logging {
-    val random = new Random
+    val random = new java.util.Random
 
     def makeObject:Object = makeSession(random.nextInt(hosts.size), 0)
 
