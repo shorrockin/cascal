@@ -56,20 +56,24 @@ class TestSuperInsertAndList extends CassandraTestPool with Logging {
     assertFalse(values.contains("Value-1"))
     assertTrue(values.contains("Value-4"))
 
-    val superKeyMap = list(key)
+    val superKeyList = list(key)
     log.debug("listing all results for list(key)")
-    superKeyMap.foreach { (sc) =>
+
+    superKeyList.foreach { (sc) =>
       log.debug("list(key) super column: " + UUID(sc._1.value))
-      superKeyMap(sc._1).foreach { (column) => log.debug("  " + string(column)) }
+      sc._2.foreach { (column) => log.debug("  " + string(column)) }
     }
-    assertEquals(2, superKeyMap.size)
-    assertEquals(3, locate(superKeyMap, superColumn1.value).size)
-    assertEquals(2, locate(superKeyMap, superColumn2.value).size)
+    
+    assertEquals(2, superKeyList.size)
+    assertEquals(UUID(superColumn1.value), UUID(superKeyList(0)._1.value)) // ensures it's returned in order
+    assertEquals(UUID(superColumn2.value), UUID(superKeyList(1)._1.value))
+    assertEquals(3, locate(superKeyList, superColumn1.value).size)
+    assertEquals(2, locate(superKeyList, superColumn2.value).size)
   }
 
 
-  def locate(map:Map[SuperColumn, Seq[Column[_]]], value:Array[Byte]):Seq[Column[_]] = {
-    map.foreach { (tuple) =>
+  def locate(l:Seq[(SuperColumn, Seq[Column[_]])], value:Array[Byte]):Seq[Column[_]] = {
+    l.foreach { (tuple) =>
       if (java.util.Arrays.equals(tuple._1.value, value)) {
         return tuple._2
       }

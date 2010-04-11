@@ -56,8 +56,8 @@ class Converter(serializers:Map[Class[_], Serializer[_]]) {
    * converts all the column sequences in the provided map (which is returned from a list
    * call). and returns a sequence of the specified type.
    */
-  def apply[T](map:Map[SuperColumn, Seq[Column[SuperColumn]]])(implicit manifest:Manifest[T]):Seq[T] = {
-    map.keySet.toSeq.map { (key) => apply[T](map(key)) }
+  def apply[T](seq:Seq[(SuperColumn, Seq[Column[SuperColumn]])])(implicit manifest:Manifest[T]):Seq[T] = {
+    seq.map { (tup) => apply[T](tup._2) }
   }
 
 
