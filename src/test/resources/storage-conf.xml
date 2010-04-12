@@ -9,6 +9,12 @@
                       CompareWith="TimeUUIDType"
                       CompareSubcolumnsWith="BytesType"/>
 
+        <!-- column family that's always byte ordered at both levels -->
+        <ColumnFamily Name="SuperBytes"
+                      ColumnType="Super"
+                      CompareWith="BytesType"
+                      CompareSubcolumnsWith="BytesType"/>
+
         <ColumnFamily Name="Standard"
                       CompareWith="BytesType"/>
       <!--

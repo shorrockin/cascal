@@ -22,6 +22,8 @@ case class SuperColumn(val value:Array[Byte], val key:SuperKey) extends Gettable
   lazy val columnParent = new ColumnParent(family.value).setSuper_column(value)
   lazy val columnPath = new ColumnPath(family.value).setSuper_column(value)
 
+  def ::(other:SuperColumn):List[SuperColumn] = other :: this :: Nil  
+
   /**
    * given the returned object from the get request, convert
    * to our return type.

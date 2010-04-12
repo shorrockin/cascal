@@ -167,43 +167,44 @@ class Session(val host:String, val port:Int, val timeout:Int, val defaultConsist
 
 
   /**
-   * given a list of keys, will perform a slice retrieving all the keys specified
-   * applying the provided predicate against those keys. Assumes that all the keys
-   * belong to the same keyspace and column family. If they are not, the first key
-   * in the sequence what is used in this query.
+   * given a list of containers, will perform a slice retrieving all the columns specified
+   * applying the provided predicate against those keys. Assumes that all the containers
+   * generate the same columnParent. That is, if they are super columns, they all have the
+   * same super column name (existing to separate key values), and regardless of column
+   * container type - belong to the same column family. If they are not, the first key
+   * in the sequence what is used in this query.<br>
+   * NOTE (to be clear): If containers is a 
    */
-  def list[ColumnType, ListType](keys:Seq[Key[ColumnType, ListType]], predicate:Predicate, consistency:Consistency):Map[Key[ColumnType, ListType], ListType] = {
-    if (keys.size > 0) {
-      val firstKey   = keys(0)
-      val keyspace   = firstKey.keyspace
-      val keyStrings = keys.map { _.value }
-      val results    = client.multiget_slice(keyspace.value, keyStrings, firstKey.columnParent, predicate.slicePredicate, consistency)
+  def list[ColumnType, ResultType](containers:Seq[ColumnContainer[ColumnType, ResultType]], predicate:Predicate, consistency:Consistency):Seq[(ColumnContainer[ColumnType, ResultType], ResultType)] = {
+    if (containers.size > 0) {
+      val firstContainer = containers(0)
+      val keyspace       = firstContainer.keyspace
+      val keyStrings     = containers.map { _.key.value }
+      val results        = client.multiget_slice(keyspace.value, keyStrings, firstContainer.columnParent, predicate.slicePredicate, consistency)
 
-      def locate(str:String) = (keys.find { _.value.equals(str) }).get
-      var out = Map[Key[ColumnType, ListType], ListType]()
-      results.foreach { (tuple) =>
+      def locate(key:String) = (containers.find { _.key.value.equals(key) }).get
+
+      results.map { (tuple) =>
         val key   = locate(tuple._1)
         val value = key.convertListResult(tuple._2)
-        out = out + (key -> value)
-      }
-
-      out
+        (key -> value)
+      }.toSeq
     } else {
-      throw new IllegalArgumentException("must provide at least 1 key for a list(keys, predicate, consistency) call")
+      throw new IllegalArgumentException("must provide at least 1 container for a list(keys, predicate, consistency) call")
     }
   }
 
 
   /**
-   * @see list(Seq[Key], Predicate, Consistency)
+   * @see list(Seq[ColumnContainer], Predicate, Consistency)
    */
-  def list[ColumnType, ListType](keys:Seq[Key[ColumnType, ListType]]):Map[Key[ColumnType, ListType], ListType] = list(keys, EmptyPredicate, defaultConsistency)
+  def list[ColumnType, ResultType](containers:Seq[ColumnContainer[ColumnType, ResultType]]):Seq[(ColumnContainer[ColumnType, ResultType], ResultType)] = list(containers, EmptyPredicate, defaultConsistency)
 
 
   /**
-   * @see list(Seq[Key], Predicate, Consistency)
+   * @see list(Seq[ColumnContainer], Predicate, Consistency)
    */
-  def list[ColumnType, ListType](keys:Seq[Key[ColumnType, ListType]], predicate:Predicate):Map[Key[ColumnType, ListType], ListType] = list(keys, predicate, defaultConsistency)
+  def list[ColumnType, ResultType](containers:Seq[ColumnContainer[ColumnType, ResultType]], predicate:Predicate):Seq[(ColumnContainer[ColumnType, ResultType], ResultType)] = list(containers, predicate, defaultConsistency)
 
 
   /**
