@@ -35,7 +35,10 @@ class Session(val host:String, val port:Int, val timeout:Int, val defaultConsist
   /**
    * closes this session
    */
-  def close() = sock.close()
+  def close() = {
+    sock.close()
+    tr.getTransport.close()
+  }
 
 
   /**
