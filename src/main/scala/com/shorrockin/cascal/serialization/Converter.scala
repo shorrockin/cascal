@@ -23,33 +23,6 @@ object Converter extends Converter(Serializer.Default) with Logging {
 class Converter(serializers:Map[Class[_], Serializer[_]]) {
 
   private var reflectionCache = Map[Class[_], ReflectionInformation]()
-
-//  /**
-//   * given a mapped case class returns a list of columns which represent this object
-//   */
-//  Need to reconsider how best to do this.
-//  def apply[T <: AnyRef](caseClass:T):Seq[Column[_]] = {
-//    val info = Converter.this.info(caseClass.getClass())
-//    var out  = List[Column[_]]()
-//
-//    val keyField = info.field(classOf[AKey]).getOrElse { throw new IllegalStateException("class does not have key field") }
-//    val key = info.family \ keyField._1.get(caseClass)
-//
-//    val colFields = info.fields(classOf[AValue])
-//    val colValues = colFields.map { (tup) => (tup._2.value -> tup._1.get(caseClass)) }
-//
-//    // if this is super column we need to try to extract the super column
-//    // and append columns to that otherwise we can just append them onto
-//    // the standard columnsToKey.
-//    info.isSuper match {
-//      case true  =>
-//        val superColField = info.field(classOf[ASuperColumn]).getOrElse { throw new IllegalStateException("class does not have super column field") }
-//        val keyValue = keyField.get(caseClass)
-//      case false =>
-//    }
-//
-//    out
-//  }
   
 
   /**
@@ -62,7 +35,7 @@ class Converter(serializers:Map[Class[_], Serializer[_]]) {
 
 
   /**
-   * given a list of columns, assumed to all belong to the same columnsToKey, creates
+   * given a list of columns, assumed to all belong to the same columns, creates
    * the object of type T using the annotations present an that class. Uses
    * the serializers to convert values in columns to their appropriate.
    */
@@ -77,15 +50,12 @@ class Converter(serializers:Map[Class[_], Serializer[_]]) {
 
       annotation match {
         // if there's a columnsToKey annotation get the first columnsToKey in the columns and return it
-        case k:AKey => cls.equals(classOf[String]) match {
-          case true  => columnsToKey(columns).value
-          case false => throw new IllegalArgumentException("@Key annotation can only be used on a String parameter")
-        }
+        case k:AKey => stringToObject(cls, columnsToKey(columns).value)
 
         // if there's a super column annotation get the super column then use the serializers
         // to convert the byte array to the appropriate value.
         case sc:ASuperColumn => info.isSuper match {
-          case true  => toObject(cls, columnsToSuperColumn(columns).value)
+          case true  => bytesToObject(cls, columnsToSuperColumn(columns).value)
           case false => throw new IllegalArgumentException("@SuperColumn may only exist within class annotated with @Super")
         }
 
@@ -93,7 +63,7 @@ class Converter(serializers:Map[Class[_], Serializer[_]]) {
         // retrieve the value, and convert it as needed.
         case a:AValue => find(a.value, columns) match {
           case None    => throw new IllegalArgumentException("Unable to find column with name: " + a.value)
-          case Some(c) => toObject(cls, c.value)
+          case Some(c) => bytesToObject(cls, c.value)
         }
 
         // optional types are like values except they map to option/some/none so they may or
@@ -102,7 +72,7 @@ class Converter(serializers:Map[Class[_], Serializer[_]]) {
         case a:Optional => cls.equals(classOf[Option[_]]) match {
           case true => find(a.column, columns) match {
             case None    => None
-            case Some(c) => Some(toObject(a.as, c.value))
+            case Some(c) => Some(bytesToObject(a.as, c.value))
           }
           case false => throw new IllegalArgumentException("@Optional may only be used on a Option[_] parameter")
         }
@@ -147,7 +117,7 @@ class Converter(serializers:Map[Class[_], Serializer[_]]) {
    * converts the specified byte array to the specified type using the installed
    * serializers.
    */
-  private def toObject[A](ofType:Class[A], bytes:Array[Byte]):A = {
+  private def bytesToObject[A](ofType:Class[A], bytes:Array[Byte]):A = {
     serializers.get(ofType) match {
       case None    => throw new IllegalArgumentException("unable to find serializer for type: " + ofType)
       case Some(s) =>
@@ -155,6 +125,21 @@ class Converter(serializers:Map[Class[_], Serializer[_]]) {
         //   "value asInstanceOf is not a member of ?"
         val castedSerial = s.asInstanceOf[Serializer[Any]]
         (castedSerial.fromBytes(bytes)).asInstanceOf[A]
+    }
+  }
+
+  /**
+   * converts the specified string to the specified type using the installed
+   * serializers.
+   */
+  private def stringToObject[A](ofType:Class[A], string:String):A = {
+    serializers.get(ofType) match {
+      case None    => throw new IllegalArgumentException("unable to find serializer for type: " + ofType)
+      case Some(s) =>
+        // TODO sure there's a better way - without this you end up with:
+        //   "value asInstanceOf is not a member of ?"
+        val castedSerial = s.asInstanceOf[Serializer[Any]]
+        (castedSerial.fromString(string)).asInstanceOf[A]
     }
   }
 
@@ -240,7 +225,7 @@ class Converter(serializers:Map[Class[_], Serializer[_]]) {
       cls.getDeclaredFields.foreach { field =>
         val annotations = field.getDeclaredAnnotations
         if (annotations.length > 0) annotations(0) match {
-          case a:AKey         => out = (field -> a) :: out
+          case a:AKey         => out = (field -> a) :: out 
           case a:Optional     => out = (field -> a) :: out
           case a:ASuperColumn => out = (field -> a) :: out
           case a:AValue       => out = (field -> a) :: out

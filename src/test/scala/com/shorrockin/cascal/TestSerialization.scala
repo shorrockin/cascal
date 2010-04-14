@@ -7,7 +7,7 @@ import utils.Conversions
 import org.junit.{Assert, Test}
 
 @Keyspace("Test") @Family("Standard")
-case class MappedStandard(@Key val a:String, @Value("Column-B") val b:Date, @Value("Column-C") val c:Long)
+case class MappedStandard(@Key val a:Long, @Value("Column-B") val b:Date, @Value("Column-C") val c:Long)
 
 @Keyspace("Test") @Family("Super") @Super
 case class MappedSuper(@Key val a:String, @SuperColumn val s:String, @Value("Column-B") val b:Date, @Value("Column-C") val c:Long)
@@ -24,13 +24,13 @@ class TestSerialization {
 
   @Test def testCanConvertFromColumnsToMappedStandard() {
     val now  = new Date
-    val key  = "Test" \ "Standard" \ "Hello"
+    val key  = "Test" \ "Standard" \ "876"
     val colb = key \ "Column-B" \ now
     val colc = key \ "Column-C" \ 12L
     val cols = colc :: colb
 
     val obj = Converter[MappedStandard](cols)
-    assertEquals("Hello", obj.a)
+    assertEquals(876L, obj.a)
     assertEquals(now, obj.b)
     assertEquals(12L, obj.c)
   }

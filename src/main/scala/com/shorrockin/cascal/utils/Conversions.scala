@@ -3,7 +3,7 @@ package com.shorrockin.cascal.utils
 import java.nio.charset.Charset
 import com.shorrockin.cascal.model.{Column, Keyspace}
 import java.util.{Date, UUID => JavaUUID}
-import com.shorrockin.cascal.serialization.{IntSerializer, LongSerializer, DateSerializer}
+import com.shorrockin.cascal.serialization._
 
 /**
  * some implicits to assist with common conversions
@@ -22,21 +22,13 @@ object Conversions {
   implicit def bytes(i:Int):Array[Byte] = IntSerializer.toBytes(i)
   implicit def int(bytes:Array[Byte]):Int = IntSerializer.fromBytes(bytes)
 
-  implicit def bytes(str:String):Array[Byte] = str.getBytes(utf8)
-  implicit def string(bytes:Array[Byte]):String = new String(bytes, utf8)
+  implicit def bytes(str:String):Array[Byte] = StringSerializer.toBytes(str)
+  implicit def string(bytes:Array[Byte]):String = StringSerializer.fromBytes(bytes)
 
-  implicit def string(source:JavaUUID) = source.toString
-  implicit def uuid(source:String) = JavaUUID.fromString(source)
-  implicit def bytes(source:JavaUUID):Array[Byte] = {
-    val msb = source.getMostSignificantBits()
-    val lsb = source.getLeastSignificantBits()
-    val buffer = new Array[Byte](16)
+  implicit def string(source:JavaUUID) = UUIDSerializer.toString(source)
+  implicit def uuid(source:String) = UUIDSerializer.fromString(source)
 
-    (0 until 8).foreach  { (i) => buffer(i) = (msb >>> 8 * (7 - i)).asInstanceOf[Byte] }
-    (8 until 16).foreach { (i) => buffer(i) = (lsb >>> 8 * (7 - i)).asInstanceOf[Byte] }
-
-    buffer
-  }
+  implicit def bytes(source:JavaUUID):Array[Byte] = UUIDSerializer.toBytes(source)
 
   implicit def string(col:Column[_]):String = {
     "%s -> %s (time: %s)".format(Conversions.string(col.name),
