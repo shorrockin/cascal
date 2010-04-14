@@ -170,7 +170,7 @@ class Converter(serializers:Map[Class[_], Serializer[_]]) {
    * contain the same columnsToKey.
    */
   private def columnsToKey(columns:Seq[Column[_]]):Key[_, _] = {
-    if (columns.length == 0) throw new IllegalArgumentException("unable to retrieve columnsToKey value when Seq[Column] is empty")
+    if (columns.length == 0) throw new IllegalArgumentException("unable to retrieve key value when empty list of columns are provided")
     columns(0).key
   }
 
