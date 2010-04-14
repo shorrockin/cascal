@@ -1,7 +1,9 @@
 package com.shorrockin.cascal.serialization
 
+import annotations.{Columns, Optional}
+import annotations.{Key => AKey, SuperColumn => ASuperColumn, Value => AValue}
+import annotations.{Keyspace => AKeySpace, Super => ASuper, Family => AFamily}
 import reflect.Manifest
-import annotations.{Keyspace => AKeySpace, Family => AFamily, Super => ASuper, Key => AKey, Value => AValue, SuperColumn => ASuperColumn, Optional}
 import com.shorrockin.cascal.model._
 import java.lang.annotation.Annotation
 import java.util.Arrays
@@ -15,8 +17,8 @@ object Converter extends Converter(Serializer.Default) with Logging {
 }
 
 /**
- *  main class used to convert objects to and from their cascal
- * equivilants.
+ * main class used to convert objects to and from their cascal
+ * equivalents.
  *
  * @author Chris Shorrock
  */
@@ -57,6 +59,13 @@ class Converter(serializers:Map[Class[_], Serializer[_]]) {
         case sc:ASuperColumn => info.isSuper match {
           case true  => bytesToObject(cls, columnsToSuperColumn(columns).value)
           case false => throw new IllegalArgumentException("@SuperColumn may only exist within class annotated with @Super")
+        }
+
+        // if there's a columns annotation that is mapped to a Seq[(Tuple, Tuple)] then iterate
+        // over all the columns returned and create the appropriate type using values provided.
+        case a:Columns => cls.equals(classOf[Seq[_]]) match {
+          case false => throw new IllegalArgumentException("@Columns annotation must be attached to Seq[Tuple2] values - was: " + cls)
+          case true  => columns.map { (column) => (bytesToObject(a.name, column.name) -> bytesToObject(a.value, column.value)) }
         }
 
         // if there's a value annotation look up the column with the matching name and then

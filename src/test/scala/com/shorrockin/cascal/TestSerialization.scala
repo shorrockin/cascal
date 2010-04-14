@@ -9,6 +9,10 @@ import org.junit.{Assert, Test}
 @Keyspace("Test") @Family("Standard")
 case class MappedStandard(@Key val a:Long, @Value("Column-B") val b:Date, @Value("Column-C") val c:Long)
 
+@Keyspace("Test") @Family("Standard")
+case class DynamicMappedStandard(@Key val key:Long,
+                                 @Columns { val name=classOf[String], val value=classOf[Int]} values:Seq[(String, Int)])
+
 @Keyspace("Test") @Family("Super") @Super
 case class MappedSuper(@Key val a:String, @SuperColumn val s:String, @Value("Column-B") val b:Date, @Value("Column-C") val c:Long)
 
@@ -33,6 +37,21 @@ class TestSerialization {
     assertEquals(876L, obj.a)
     assertEquals(now, obj.b)
     assertEquals(12L, obj.c)
+  }
+
+
+  @Test def testCanConvertDynamicMapValue() {
+    val now  = new Date
+    val key  = "Test" \ "Standard" \ "12345"
+    val colb = key \ "Column-B" \ 123
+    val colc = key \ "Column-C" \ 12
+    val cols = colc :: colb
+
+    val obj = Converter[DynamicMappedStandard](cols)
+    assertEquals(12345L, obj.key)
+    assertEquals(2, obj.values.size)
+    assertEquals("Column-C", obj.values(0)._1)
+    assertEquals(123, obj.values(1)._2)
   }
 
   @Test def testCanConvertOptionColumnsToMappedStandard() {
