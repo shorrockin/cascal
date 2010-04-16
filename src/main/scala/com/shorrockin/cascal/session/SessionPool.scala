@@ -63,7 +63,7 @@ class SessionPool(val hosts:Seq[Host], val params:PoolParams, consistency:Consis
    * function. This function will clean up the borrowed object after
    * it has finished. You do not need to manually call "return"
    */
-  def borrow[E](f:(Session) => E) {
+  def borrow[E](f:(Session) => E):E = {
     var session:Session = null
 
     try {
