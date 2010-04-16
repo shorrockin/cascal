@@ -11,7 +11,9 @@ import com.shorrockin.cascal.utils.Logging
  *
  * @author Chris Shorrock
  */
-class SessionPool(val hosts:Seq[Host], val params:PoolParams, consistency:Consistency) {
+class SessionPool(val hosts:Seq[Host], val params:PoolParams, consistency:Consistency, framedTransport:Boolean) {
+  def this(hosts:Seq[Host], params:PoolParams, consistency:Consistency) = this(hosts, params, consistency, false)
+  def this(hosts:Seq[Host], params:PoolParams) = this(hosts, params, Consistency.One, false)
 
   private val pool = {
     val factory = new GenericObjectPoolFactory(SessionFactory,
@@ -102,7 +104,7 @@ class SessionPool(val hosts:Seq[Host], val params:PoolParams, consistency:Consis
 
         try {
           log.debug("attempting to create connection to: " + host)
-          val session = new Session(host.address, host.port, host.timeout, consistency)
+          val session = new Session(host.address, host.port, host.timeout, consistency, framedTransport)
           session.open
           session
         } catch {

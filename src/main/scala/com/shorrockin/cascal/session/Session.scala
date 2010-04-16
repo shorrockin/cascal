@@ -1,7 +1,6 @@
 package com.shorrockin.cascal.session
 
 
-import org.apache.thrift.transport.TSocket
 import org.apache.thrift.protocol.TBinaryProtocol
 
 import collection.jcl.Buffer
@@ -12,6 +11,7 @@ import collection.jcl.Conversions._
 import com.shorrockin.cascal.utils.Conversions._
 
 import com.shorrockin.cascal.model._
+import org.apache.thrift.transport.{TFramedTransport, TSocket}
 
 /**
  * a cascal session is the entry point for interacting with the
@@ -19,12 +19,18 @@ import com.shorrockin.cascal.model._
  *
  * @author Chris Shorrock
  */
-class Session(val host:String, val port:Int, val timeout:Int, val defaultConsistency:Consistency) {
+class Session(val host:String, val port:Int, val timeout:Int, val defaultConsistency:Consistency, val framedTransport:Boolean) {
+  def this(host:String, port:Int, timeout:Int, defaultConsistency:Consistency) = this(host, port, timeout, defaultConsistency, false)
+  def this(host:String, port:Int, timeout:Int) = this(host, port, timeout, Consistency.One, false)
 
-  private val sock = new TSocket(host, port, timeout)
-  private val tr   = new TBinaryProtocol(sock)
+  private val sock = {
+    if (framedTransport) new TFramedTransport(new TSocket(host, port, timeout))
+    else new TSocket(host, port, timeout)
+  }
 
-  val client  = new Cassandra.Client(tr,tr)
+  private val protocol = new TBinaryProtocol(sock)
+
+  val client  = new Cassandra.Client(protocol,protocol)
 
   /**
    * opens the socket
@@ -37,7 +43,7 @@ class Session(val host:String, val port:Int, val timeout:Int, val defaultConsist
    */
   def close() = {
     sock.close()
-    tr.getTransport.close()
+    protocol.getTransport.close()
   }
 
 
