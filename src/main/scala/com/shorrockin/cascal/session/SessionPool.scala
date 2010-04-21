@@ -124,7 +124,7 @@ class SessionPool(val hosts:Seq[Host], val params:PoolParams, consistency:Consis
 
     def destroyObject(obj:Object):Unit = session(obj).close
 
-    def validateObject(obj:Object):Boolean = session(obj).isOpen
+    def validateObject(obj:Object):Boolean = session(obj).isOpen && !session(obj).hasError
 
     def passivateObject(obj:Object):Unit = {}
   }

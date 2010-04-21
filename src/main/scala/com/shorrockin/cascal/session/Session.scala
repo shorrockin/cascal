@@ -30,6 +30,8 @@ class Session(val host:String, val port:Int, val timeout:Int, val defaultConsist
 
   private val protocol = new TBinaryProtocol(sock)
 
+  var lastError:Option[Throwable] = None
+
   val client  = new Cassandra.Client(protocol,protocol)
 
   /**
@@ -51,6 +53,12 @@ class Session(val host:String, val port:Int, val timeout:Int, val defaultConsist
    * returns true if this session is open
    */
   def isOpen = sock.isOpen
+
+
+  /**
+   * true if the we experienced an error while using this session
+   */
+  def hasError = lastError.isDefined
 
 
   /**
@@ -80,7 +88,7 @@ class Session(val host:String, val port:Int, val timeout:Int, val defaultConsist
   /**
    *  returns the column value for the specified column
    */
-  def get[ResultType](col:Gettable[ResultType], consistency:Consistency):Option[ResultType] = {
+  def get[ResultType](col:Gettable[ResultType], consistency:Consistency):Option[ResultType] = detect {
     try {
       val result = client.get(col.keyspace.value, col.key.value, col.columnPath, consistency)
       Some(col.convertGetResult(result))
@@ -99,7 +107,7 @@ class Session(val host:String, val port:Int, val timeout:Int, val defaultConsist
   /**
    * inserts the specified column value
    */
-  def insert[E](col:Column[E], consistency:Consistency) = {
+  def insert[E](col:Column[E], consistency:Consistency) = detect {
     client.insert(col.keyspace.value, col.key.value, col.columnPath, col.value, col.time, consistency)
     col
   }
@@ -114,7 +122,7 @@ class Session(val host:String, val port:Int, val timeout:Int, val defaultConsist
   /**
    *   counts the number of columns in the specified column container
    */
-  def count(container:ColumnContainer[_ ,_], consistency:Consistency):Int = {
+  def count(container:ColumnContainer[_ ,_], consistency:Consistency):Int = detect {
     client.get_count(container.keyspace.value, container.key.value, container.columnParent, consistency)
   }
 
@@ -128,7 +136,7 @@ class Session(val host:String, val port:Int, val timeout:Int, val defaultConsist
   /**
    * removes the specified column container
    */
-  def remove(container:ColumnContainer[_, _], consistency:Consistency):Unit = {
+  def remove(container:ColumnContainer[_, _], consistency:Consistency):Unit = detect {
     client.remove(container.keyspace.value, container.key.value, container.columnPath, now, consistency)
   }
 
@@ -142,7 +150,7 @@ class Session(val host:String, val port:Int, val timeout:Int, val defaultConsist
   /**
    * removes the specified column container
    */
-  def remove(column:Column[_], consistency:Consistency):Unit = {
+  def remove(column:Column[_], consistency:Consistency):Unit = detect {
     client.remove(column.keyspace.value, column.key.value, column.columnPath, now, consistency)
   }
 
@@ -157,7 +165,7 @@ class Session(val host:String, val port:Int, val timeout:Int, val defaultConsist
    * performs a list of the provided standard key. uses the list of columns as the predicate
    * to determine which columns to return.
    */
-  def list[ResultType](container:ColumnContainer[_, ResultType], predicate:Predicate, consistency:Consistency):ResultType = {
+  def list[ResultType](container:ColumnContainer[_, ResultType], predicate:Predicate, consistency:Consistency):ResultType = detect {
     val results = client.get_slice(container.keyspace.value, container.key.value, container.columnParent, predicate.slicePredicate, consistency)
     container.convertListResult(convertList(results))
   }
@@ -185,7 +193,7 @@ class Session(val host:String, val port:Int, val timeout:Int, val defaultConsist
    * NOTE (to be clear): If containers is a 
    */
   def list[ColumnType, ResultType](containers:Seq[ColumnContainer[ColumnType, ResultType]], predicate:Predicate, consistency:Consistency):Seq[(ColumnContainer[ColumnType, ResultType], ResultType)] = {
-    if (containers.size > 0) {
+    if (containers.size > 0) detect {
       val firstContainer = containers(0)
       val keyspace       = firstContainer.keyspace
       val keyStrings     = containers.map { _.key.value }
@@ -221,7 +229,7 @@ class Session(val host:String, val port:Int, val timeout:Int, val defaultConsist
    * with the provided consistency guaranteed. the key range may be a range of keys or a range
    * of tokens. This list call is only available when using an order-preserving partition.
    */
-  def list[ColumnType, ListType](family:ColumnFamily[Key[ColumnType, ListType]], range:KeyRange, predicate:Predicate, consistency:Consistency):Map[Key[ColumnType, ListType], ListType] = {
+  def list[ColumnType, ListType](family:ColumnFamily[Key[ColumnType, ListType]], range:KeyRange, predicate:Predicate, consistency:Consistency):Map[Key[ColumnType, ListType], ListType] = detect {
     val results = client.get_range_slices(family.keyspace.value, family.columnParent, predicate.slicePredicate, range.cassandraRange, consistency)
     var map     = Map[Key[ColumnType, ListType], ListType]()
 
@@ -255,7 +263,7 @@ class Session(val host:String, val port:Int, val timeout:Int, val defaultConsist
    * is used.
    */
   def batch(ops:Seq[Operation], consistency:Consistency):Unit = {
-    if (ops.size > 0) {
+    if (ops.size > 0) detect {
       val keyToFamilyMutations = new HashMap[String, JMap[String, JList[Mutation]]]()
       val keyspace = ops(0).keyspace
 
@@ -299,5 +307,17 @@ class Session(val host:String, val port:Int, val timeout:Int, val defaultConsist
    * retuns the current time in milliseconds
    */
   private def now = System.currentTimeMillis
+
+
+  /**
+   * all calls which access the session should be wrapped within this method,
+   * it will catch any exceptions and make sure the session is then removed
+   * from the pool.
+   */
+  private def detect[T](f: => T) = try {
+    f
+  } catch {
+    case t:Throwable => lastError = Some(t) ; throw t
+  }
 
 }

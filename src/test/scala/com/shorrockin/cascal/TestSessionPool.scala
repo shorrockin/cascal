@@ -25,4 +25,24 @@ class TestSessionPool {
     pool.close
     assertEquals(0, pool.idle)
   }
+
+  @Test def testErrorCatchingAndLogging = {
+    EmbeddedTestCassandra.init
+
+    val hosts  = Host("localhost", 9160, 250) :: Nil
+    val params = new PoolParams(10, ExhaustionPolicy.Fail, 500L, 6, 2)
+    val pool   = new SessionPool(hosts, params, Consistency.One)
+
+    pool.borrow { session =>
+      try {
+        session.count("Non Existant" \ "Nope" \ "Nice Try")
+      } catch {
+        case e:Throwable => /* ignore */
+      }
+
+      assertTrue(session.hasError)
+    }
+
+    assertEquals(0, pool.idle)
+  }
 }
