@@ -56,7 +56,7 @@ class TestSerialization {
 
   @Test def testCanConvertOptionColumnsToMappedStandard() {
     val key     = "Test" \ "Standard" \ "Hello"
-    val valid   = key \ "Column" \ 12
+    val valid   = key \ "Column" \ 12L
     val inValid = key \ "XYZ" \ 12
 
     val someObj = Converter[MappedOptionStandard](valid :: Nil)
