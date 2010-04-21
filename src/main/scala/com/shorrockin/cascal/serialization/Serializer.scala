@@ -4,6 +4,7 @@ import com.shorrockin.cascal.utils.{UUID => UUIDUtils}
 import java.util.UUID
 import java.util.Date
 import java.nio.charset.Charset
+import java.nio.ByteBuffer
 
 object Serializer {
 
@@ -70,15 +71,19 @@ object UUIDSerializer extends Serializer[UUID] {
 }
 
 object IntSerializer extends Serializer[Int] {
-  def toBytes(i:Int) = StringSerializer.toBytes(i.toString)
-  def fromBytes(bytes:Array[Byte]) = StringSerializer.fromBytes(bytes).toInt
+  val bytesPerInt = java.lang.Integer.SIZE / java.lang.Byte.SIZE
+
+  def toBytes(i:Int) = ByteBuffer.wrap(new Array[Byte](bytesPerInt)).putInt(i).array()
+  def fromBytes(bytes:Array[Byte]) = ByteBuffer.wrap(bytes).getInt()
   def toString(obj:Int) = obj.toString
   def fromString(str:String) = str.toInt
 }
 
 object LongSerializer extends Serializer[Long] {
-  def toBytes(l:Long) = StringSerializer.toBytes(l.toString)
-  def fromBytes(bytes:Array[Byte]) = StringSerializer.fromBytes(bytes).toLong
+  val bytesPerLong = java.lang.Long.SIZE / java.lang.Byte.SIZE
+
+  def toBytes(l:Long) = ByteBuffer.wrap(new Array[Byte](bytesPerLong)).putLong(l).array()
+  def fromBytes(bytes:Array[Byte]) = ByteBuffer.wrap(bytes).getLong()
   def toString(obj:Long) = obj.toString
   def fromString(str:String) = str.toLong
 }
@@ -91,15 +96,19 @@ object BooleanSerializer extends Serializer[Boolean] {
 }
 
 object FloatSerializer extends Serializer[Float] {
-  def toBytes(f:Float) = StringSerializer.toBytes(f.toString)
-  def fromBytes(bytes:Array[Byte]) = StringSerializer.fromBytes(bytes).toFloat
+  val bytesPerFloat = java.lang.Float.SIZE / java.lang.Byte.SIZE
+
+  def toBytes(f:Float) = ByteBuffer.wrap(new Array[Byte](bytesPerFloat)).putFloat(f).array()
+  def fromBytes(bytes:Array[Byte]) = ByteBuffer.wrap(bytes).getFloat()
   def toString(obj:Float) = obj.toString
   def fromString(str:String) = str.toFloat
 }
 
 object DoubleSerializer extends Serializer[Double] {
-  def toBytes(d:Double) = StringSerializer.toBytes(d.toString)
-  def fromBytes(bytes:Array[Byte]) = StringSerializer.fromBytes(bytes).toDouble
+  val bytesPerDouble = java.lang.Double.SIZE / java.lang.Byte.SIZE
+
+  def toBytes(d:Double) = ByteBuffer.wrap(new Array[Byte](bytesPerDouble)).putDouble(d).array()
+  def fromBytes(bytes:Array[Byte]) = ByteBuffer.wrap(bytes).getDouble
   def toString(obj:Double) = obj.toString
   def fromString(str:String) = str.toDouble
 }
