@@ -94,12 +94,17 @@ class SessionPool(val hosts:Seq[Host], val params:PoolParams, consistency:Consis
    * used to create sessions
    */
   private object SessionFactory extends PoolableObjectFactory with Logging {
-    val random = new java.util.Random
+    // instead of randomly choosing a host we'll attempt to round-robin them, may not
+    // be completely round robin with multiple threads but it should provide a more
+    // even spread than something random.
+    var lastHostUsed = 0
 
-    def makeObject:Object = makeSession(random.nextInt(hosts.size), 0)
+    def next(current:Int) = (current + 1) % hosts.size
+    def makeObject:Object = makeSession(next(lastHostUsed), 0)
 
     def makeSession(hostIndex:Int, count:Int):Session = {
       if (count < hosts.size) {
+        lastHostUsed = hostIndex
         val host = hosts(hostIndex)
 
         try {
@@ -110,10 +115,9 @@ class SessionPool(val hosts:Seq[Host], val params:PoolParams, consistency:Consis
         } catch {
           case e:Exception =>
             log.warn("encountered exception while creating connection(" + host + "), will attempt next host in configuration", e)
-            makeSession((hostIndex + 1) % hosts.size, count + 1)
+            makeSession(next(hostIndex), count + 1)
         }
       } else {
-        // TODO throw something of more substance
         throw new IllegalStateException("unable to connect to any of the hosts in the pool")
       }
     }
