@@ -3,6 +3,8 @@ package com.shorrockin.cascal.session
 import org.apache.commons.pool.PoolableObjectFactory
 import org.apache.commons.pool.impl.{GenericObjectPoolFactory, GenericObjectPool}
 import com.shorrockin.cascal.utils.Logging
+import com.shorrockin.cascal.jmx.CascalStatistics
+
 
 /**
  * a session pool which maintains a collection of open sessions so that
@@ -14,6 +16,8 @@ import com.shorrockin.cascal.utils.Logging
 class SessionPool(val hosts:Seq[Host], val params:PoolParams, consistency:Consistency, framedTransport:Boolean) {
   def this(hosts:Seq[Host], params:PoolParams, consistency:Consistency) = this(hosts, params, consistency, false)
   def this(hosts:Seq[Host], params:PoolParams) = this(hosts, params, Consistency.One, false)
+
+  CascalStatistics.register(this)
 
   private val pool = {
     val factory = new GenericObjectPoolFactory(SessionFactory,
@@ -37,7 +41,10 @@ class SessionPool(val hosts:Seq[Host], val params:PoolParams, consistency:Consis
   /**
    * closes this pool and releases any resources available to it.
    */
-  def close() { pool.close }
+  def close() {
+    pool.close
+    CascalStatistics.unregister(this)
+  }
 
 
   /**
@@ -67,10 +74,13 @@ class SessionPool(val hosts:Seq[Host], val params:PoolParams, consistency:Consis
     var session:Session = null
 
     try {
-      session = pool.borrowObject.asInstanceOf[Session]
-      f(session)
+      session = checkout
+      val before = System.currentTimeMillis
+      val out = f(session)
+      CascalStatistics.usageInc(System.currentTimeMillis - before)
+      out
     } finally {
-      if (null != session) pool.returnObject(session)
+      if (null != session) checkin(session)
     }
   }
 
@@ -80,14 +90,21 @@ class SessionPool(val hosts:Seq[Host], val params:PoolParams, consistency:Consis
    * session it must be returned to the pool. failure to do so
    * will result your pool shedding a tear. 
    */
-  def checkout:Session = pool.borrowObject.asInstanceOf[Session]
+  def checkout:Session = {
+    val out = pool.borrowObject.asInstanceOf[Session]
+    CascalStatistics.checkoutInc
+    out
+  }
 
 
   /**
    * returns the session back to the pool. only necessary when a sessio
    * is retrieved through the checkout methad.
    */
-  def checkin(session:Session) = pool.returnObject(session)
+  def checkin(session:Session) = {
+    CascalStatistics.checkinInc
+    pool.returnObject(session)
+  }
 
 
   /**
@@ -111,6 +128,7 @@ class SessionPool(val hosts:Seq[Host], val params:PoolParams, consistency:Consis
           log.debug("attempting to create connection to: " + host)
           val session = new Session(host.address, host.port, host.timeout, consistency, framedTransport)
           session.open
+          CascalStatistics.creationInc
           session
         } catch {
           case e:Exception =>
