@@ -12,13 +12,30 @@ import com.shorrockin.cascal.session.SessionPool
  * @author Chris Shorrock
  */
 object CascalStatistics extends CascalStatistics$MBean {
-  ManagementFactory.getPlatformMBeanServer.registerMBean(this, new ObjectName("com.shorrockin.cascal:name=CascalStatistics"))
+  private val objectName  = new ObjectName("com.shorrockin.cascal:name=CascalStatistics")
+  private val mbeanServer = ManagementFactory.getPlatformMBeanServer
+
+  reinstallMBean()
 
   private var pools = List[SessionPool]()
   private var creationCount = 0L
   private var checkoutCount = 0L
   private var checkinCount = 0L
   private var totalUsageTime = 0L
+
+  /**
+   * normally this shouldn't be an issue, since this is an object. However if this library
+   * is loaded twice by different class-loaders (for example) we could run into a scenario
+   * where register throws an already registered exception. This scenario is likely to
+   * occur in situations where we're running Cassandra/Cascal using something like SBT where
+   * the JVM stays around between runs and each test is run in an isolated classloader. This
+   * fix DOES NOT address the situation where cascal is used in two separate classloaders
+   * concurrently - which would be a problem. (that is a TODO item).*
+   */
+  def reinstallMBean() {
+    if (mbeanServer.isRegistered(objectName)) mbeanServer.unregisterMBean(objectName)
+    mbeanServer.registerMBean(this, objectName)
+  }
 
   def register(pool:SessionPool) = pools = pool :: pools
   def unregister(pool:SessionPool) = pools = pools - pool
