@@ -19,13 +19,14 @@ import org.apache.thrift.transport.{TFramedTransport, TSocket}
  *
  * @author Chris Shorrock
  */
-class Session(val host:String, val port:Int, val timeout:Int, val defaultConsistency:Consistency, val framedTransport:Boolean) {
+class Session(val host:Host, val defaultConsistency:Consistency, val framedTransport:Boolean) {
+  def this(host:String, port:Int, timeout:Int, defaultConsistency:Consistency, framedTransport:Boolean) = this(Host(host, port, timeout), defaultConsistency, framedTransport)
   def this(host:String, port:Int, timeout:Int, defaultConsistency:Consistency) = this(host, port, timeout, defaultConsistency, false)
   def this(host:String, port:Int, timeout:Int) = this(host, port, timeout, Consistency.One, false)
 
   private val sock = {
-    if (framedTransport) new TFramedTransport(new TSocket(host, port, timeout))
-    else new TSocket(host, port, timeout)
+    if (framedTransport) new TFramedTransport(new TSocket(host.address, host.port, host.timeout))
+    else new TSocket(host.address, host.port, host.timeout)
   }
 
   private val protocol = new TBinaryProtocol(sock)

@@ -77,8 +77,13 @@ class SessionPool(val hosts:Seq[Host], val params:PoolParams, consistency:Consis
       session = checkout
       val before = System.currentTimeMillis
       val out = f(session)
-      CascalStatistics.usageInc(System.currentTimeMillis - before)
+      CascalStatistics.usage(session.host, System.currentTimeMillis - before)
       out
+    } catch {
+      case t:Throwable => {
+        if (null != session) CascalStatistics.usageError(session.host)
+        throw t
+      }
     } finally {
       if (null != session) checkin(session)
     }
@@ -90,21 +95,14 @@ class SessionPool(val hosts:Seq[Host], val params:PoolParams, consistency:Consis
    * session it must be returned to the pool. failure to do so
    * will result your pool shedding a tear. 
    */
-  def checkout:Session = {
-    val out = pool.borrowObject.asInstanceOf[Session]
-    CascalStatistics.checkoutInc
-    out
-  }
+  def checkout:Session = pool.borrowObject.asInstanceOf[Session]
 
 
   /**
    * returns the session back to the pool. only necessary when a sessio
    * is retrieved through the checkout methad.
    */
-  def checkin(session:Session) = {
-    CascalStatistics.checkinInc
-    pool.returnObject(session)
-  }
+  def checkin(session:Session) = pool.returnObject(session)
 
 
   /**
@@ -128,11 +126,12 @@ class SessionPool(val hosts:Seq[Host], val params:PoolParams, consistency:Consis
           log.debug("attempting to create connection to: " + host)
           val session = new Session(host.address, host.port, host.timeout, consistency, framedTransport)
           session.open
-          CascalStatistics.creationInc
+          CascalStatistics.creation(host)
           session
         } catch {
           case e:Exception =>
             log.warn("encountered exception while creating connection(" + host + "), will attempt next host in configuration", e)
+            CascalStatistics.creationError(host)
             makeSession(next(hostIndex), count + 1)
         }
       } else {
