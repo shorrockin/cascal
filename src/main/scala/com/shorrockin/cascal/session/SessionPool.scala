@@ -4,6 +4,7 @@ import org.apache.commons.pool.PoolableObjectFactory
 import org.apache.commons.pool.impl.{GenericObjectPoolFactory, GenericObjectPool}
 import com.shorrockin.cascal.utils.Logging
 import com.shorrockin.cascal.jmx.CascalStatistics
+import com.shorrockin.cascal.model._
 
 
 /**
@@ -11,9 +12,14 @@ import com.shorrockin.cascal.jmx.CascalStatistics
  * we can avoid the overhead of creating a new tcp connection every time
  * something is need.
  *
+ * session pool is also an instance of a session template - when used in
+ * this fashion each invocation to the sessiontemplate method will invoke
+ * a borrow method and an execution of the requested method against the
+ * session returned.
+ *
  * @author Chris Shorrock
  */
-class SessionPool(val hosts:Seq[Host], val params:PoolParams, consistency:Consistency, framedTransport:Boolean) {
+class SessionPool(val hosts:Seq[Host], val params:PoolParams, consistency:Consistency, framedTransport:Boolean) extends SessionTemplate {
   def this(hosts:Seq[Host], params:PoolParams, consistency:Consistency) = this(hosts, params, consistency, false)
   def this(hosts:Seq[Host], params:PoolParams) = this(hosts, params, Consistency.One, false)
 
@@ -149,7 +155,59 @@ class SessionPool(val hosts:Seq[Host], val params:PoolParams, consistency:Consis
 
     def passivateObject(obj:Object):Unit = {}
   }
+
+
+  def clusterName:String = borrow { _.clusterName }
+
+  def configFile:String = borrow { _.configFile }
+
+  def version:String = borrow { _.version }
+
+  def keyspaces:Seq[String] = borrow { _.keyspaces }
+
+  def get[ResultType](col:Gettable[ResultType], consistency:Consistency):Option[ResultType] = borrow { _.get(col, consistency) }
+
+  def get[ResultType](col:Gettable[ResultType]):Option[ResultType] = borrow { _.get(col) }
+
+  def insert[E](col:Column[E], consistency:Consistency):Column[E] = borrow { _.insert(col, consistency) }
+
+  def insert[E](col:Column[E]):Column[E] = borrow { _.insert(col) }
+
+  def count(container:ColumnContainer[_ ,_], consistency:Consistency):Int = borrow { _.count(container, consistency) }
+
+  def count(container:ColumnContainer[_, _]):Int = borrow { _.count(container) }
+
+  def remove(container:ColumnContainer[_, _], consistency:Consistency):Unit = borrow { _.remove(container, consistency) }
+
+  def remove(container:ColumnContainer[_, _]):Unit = borrow { _.remove(container) }
+
+  def remove(column:Column[_], consistency:Consistency):Unit = borrow { _.remove(column, consistency) }
+
+  def remove(column:Column[_]):Unit = borrow { _.remove(column) }
+
+  def list[ResultType](container:ColumnContainer[_, ResultType], predicate:Predicate, consistency:Consistency):ResultType = borrow { _.list(container, predicate, consistency) }
+
+  def list[ResultType](container:ColumnContainer[_, ResultType]):ResultType = borrow { _.list(container) }
+
+  def list[ResultType](container:ColumnContainer[_, ResultType], predicate:Predicate):ResultType = borrow { _.list(container, predicate) }
+
+  def list[ColumnType, ResultType](containers:Seq[ColumnContainer[ColumnType, ResultType]], predicate:Predicate, consistency:Consistency):Seq[(ColumnContainer[ColumnType, ResultType], ResultType)] = borrow { _.list(containers, predicate, consistency) }
+
+  def list[ColumnType, ResultType](containers:Seq[ColumnContainer[ColumnType, ResultType]]):Seq[(ColumnContainer[ColumnType, ResultType], ResultType)] = borrow { _.list(containers) }
+
+  def list[ColumnType, ResultType](containers:Seq[ColumnContainer[ColumnType, ResultType]], predicate:Predicate):Seq[(ColumnContainer[ColumnType, ResultType], ResultType)] = borrow { _.list(containers, predicate) }
+
+  def list[ColumnType, ListType](family:ColumnFamily[Key[ColumnType, ListType]], range:KeyRange, predicate:Predicate, consistency:Consistency):Map[Key[ColumnType, ListType], ListType] = borrow { _.list(family, range, predicate, consistency) }
+
+  def list[ColumnType, ListType](family:ColumnFamily[Key[ColumnType, ListType]], range:KeyRange, consistency:Consistency):Map[Key[ColumnType, ListType], ListType] = borrow { _.list(family, range, consistency) }
+
+  def list[ColumnType, ListType](family:ColumnFamily[Key[ColumnType, ListType]], range:KeyRange):Map[Key[ColumnType, ListType], ListType] = borrow { _.list(family, range) }
+
+  def batch(ops:Seq[Operation], consistency:Consistency):Unit = borrow { _.batch(ops, consistency) }
+
+  def batch(ops:Seq[Operation]):Unit = borrow { _.batch(ops) }
 }
+
 
 /**
  * case class used when configuring the session pool
@@ -157,7 +215,6 @@ class SessionPool(val hosts:Seq[Host], val params:PoolParams, consistency:Consis
 case class Host(address:String, port:Int, timeout:Int) {
   def ::(other:Host) = other :: this :: Nil
 }
-
 
 
 /**

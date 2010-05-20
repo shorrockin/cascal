@@ -1,6 +1,5 @@
 package com.shorrockin.cascal.session
 
-
 import org.apache.thrift.protocol.TBinaryProtocol
 
 import collection.jcl.Buffer
@@ -19,7 +18,7 @@ import org.apache.thrift.transport.{TFramedTransport, TSocket}
  *
  * @author Chris Shorrock
  */
-class Session(val host:Host, val defaultConsistency:Consistency, val framedTransport:Boolean) {
+class Session(val host:Host, val defaultConsistency:Consistency, val framedTransport:Boolean) extends SessionTemplate {
   def this(host:String, port:Int, timeout:Int, defaultConsistency:Consistency, framedTransport:Boolean) = this(Host(host, port, timeout), defaultConsistency, framedTransport)
   def this(host:String, port:Int, timeout:Int, defaultConsistency:Consistency) = this(host, port, timeout, defaultConsistency, false)
   def this(host:String, port:Int, timeout:Int) = this(host, port, timeout, Consistency.One, false)
