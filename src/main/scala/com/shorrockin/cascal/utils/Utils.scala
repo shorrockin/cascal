@@ -51,7 +51,7 @@ object Utils extends Logging {
    * file in the source file.
    */
   def replace(file:File, replacements:(String, String)*):File = {
-    val contents = Source.fromFile(file).getLines.toList.map { (line) =>
+    val contents = Source.fromFile(file).getLines().toList.map { (line) =>
       var current = line
       replacements.foreach { (r) => current = current.replace(r._1, r._2) }
       current

@@ -11,16 +11,16 @@ case class MappedStandard(@Key val a:Long, @Value("Column-B") val b:Date, @Value
 
 @Keyspace("Test") @Family("Standard")
 case class DynamicMappedStandard(@Key val key:Long,
-                                 @Columns { val name=classOf[String], val value=classOf[Int]} values:Seq[(String, Int)])
+                                 @Columns(name=classOf[String], value=classOf[Int]) values:Seq[(String, Int)])
 
 @Keyspace("Test") @Family("Super") @Super
 case class MappedSuper(@Key val a:String, @SuperColumn val s:String, @Value("Column-B") val b:Date, @Value("Column-C") val c:Long)
 
 @Keyspace("Test") @Family("Standard")
-case class MappedOptionStandard(@Optional { val column="Column", val as=classOf[Long] } val value:Option[Long])
+case class MappedOptionStandard(@Optional(column="Column", as=classOf[Long]) val value:Option[Long])
 
 @Keyspace("Test") @Family("Super") @Super
-case class MappedOptionSuper(@Optional { val column="C", val as=classOf[String] } val value:Option[String])
+case class MappedOptionSuper(@Optional(column="C", as=classOf[String]) val value:Option[String])
 
 class TestSerialization {
   import Conversions._

@@ -2,11 +2,9 @@ package com.shorrockin.cascal.session
 
 import org.apache.thrift.protocol.TBinaryProtocol
 
-import collection.jcl.Buffer
 import org.apache.cassandra.thrift.{Mutation, Cassandra, NotFoundException, ConsistencyLevel}
 import java.util.{Map => JMap, List => JList, HashMap, ArrayList}
 
-import collection.jcl.Conversions._
 import com.shorrockin.cascal.utils.Conversions._
 
 import com.shorrockin.cascal.model._
@@ -83,7 +81,6 @@ class Session(val host:Host, val defaultConsistency:Consistency, val framedTrans
    * returns all the keyspaces from the cassandra instance
    */
   lazy val keyspaces:Seq[String] = Buffer(client.get_string_list_property("keyspaces"))
-
   
   /**
    *  returns the column value for the specified column
@@ -201,7 +198,7 @@ class Session(val host:Host, val defaultConsistency:Consistency, val framedTrans
 
       def locate(key:String) = (containers.find { _.key.value.equals(key) }).get
 
-      results.map { (tuple) =>
+      convertMap(results).map { (tuple) =>
         val key   = locate(tuple._1)
         val value = key.convertListResult(tuple._2)
         (key -> value)
@@ -233,7 +230,7 @@ class Session(val host:Host, val defaultConsistency:Consistency, val framedTrans
     val results = client.get_range_slices(family.keyspace.value, family.columnParent, predicate.slicePredicate, range.cassandraRange, consistency)
     var map     = Map[Key[ColumnType, ListType], ListType]()
 
-    results.foreach { (keyslice) =>
+    convertList(results).foreach { (keyslice) =>
       val key = (family \ keyslice.key)
       map = map + (key -> key.convertListResult(keyslice.columns))
     }
@@ -320,4 +317,13 @@ class Session(val host:Host, val defaultConsistency:Consistency, val framedTrans
     case t:Throwable => lastError = Some(t) ; throw t
   }
 
+  private def Buffer[T](v:java.util.List[T]) = {
+	 scala.collection.JavaConversions.asBuffer(v)
+  }
+  implicit private def convertList[T](v:java.util.List[T]):List[T] = {
+	 scala.collection.JavaConversions.asBuffer(v).toList
+  }
+  implicit private def convertMap[K,V](v:java.util.Map[K,V]): scala.collection.mutable.Map[K,V] = {
+	 scala.collection.JavaConversions.asMap(v)
+  }
 }

@@ -1,6 +1,5 @@
 package com.shorrockin.cascal.model
 
-import scala.collection.jcl.Conversions.convertList
 import org.apache.cassandra.thrift.{ColumnOrSuperColumn}
 
 case class SuperKey(val value:String, val family:SuperColumnFamily) extends Key[SuperColumn, Seq[(SuperColumn, Seq[Column[SuperColumn]])]] {
@@ -19,6 +18,10 @@ case class SuperKey(val value:String, val family:SuperColumnFamily) extends Key[
       }
       (superColumn -> columns)
     }
+  }
+
+  private def convertList[T](v:java.util.List[T]):List[T] = {
+	 scala.collection.JavaConversions.asBuffer(v).toList
   }
 
   override def toString = "%s \\ SuperKey(value = %s)".format(family.toString, value)

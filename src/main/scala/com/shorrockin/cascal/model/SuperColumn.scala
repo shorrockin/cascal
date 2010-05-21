@@ -1,7 +1,6 @@
 package com.shorrockin.cascal.model
 
 import org.apache.cassandra.thrift.{ColumnPath, ColumnParent, ColumnOrSuperColumn}
-import scala.collection.jcl.Conversions.convertList
 
 /**
  * a super standard key the key who's parent is a super key. It acts in much
@@ -23,6 +22,10 @@ case class SuperColumn(val value:Array[Byte], val key:SuperKey) extends Gettable
   lazy val columnPath = new ColumnPath(family.value).setSuper_column(value)
 
   def ::(other:SuperColumn):List[SuperColumn] = other :: this :: Nil  
+
+  private def convertList[T](v:java.util.List[T]):List[T] = {
+	 scala.collection.JavaConversions.asBuffer(v).toList
+  }
 
   /**
    * given the returned object from the get request, convert

@@ -5,8 +5,8 @@ import org.apache.cassandra.config.DatabaseDescriptor
 import java.io.File
 import java.net.ConnectException
 import org.apache.thrift.transport.{TTransportException, TSocket}
-import session._
-import utils.{Utils, Logging}
+import com.shorrockin.cascal.session._
+import com.shorrockin.cascal.utils.{Utils, Logging}
 /**
  * trait which mixes in the functionality necessary to embed
  * cassandra into a unit test
