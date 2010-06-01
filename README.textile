@@ -6,7 +6,7 @@ h3. Cascal - Cassandra Simplified
 |_. Stable Version|1.1|
 |_. Snapshot Version|1.2-SNAPSHOT|
 |_. Scala Version|2.7.7|
-|_. Cassandra Version|0.6.0-beta3|
+|_. Cassandra Version|0.6.1|
 
 
 h3. Description:
