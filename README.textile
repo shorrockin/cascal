@@ -5,7 +5,7 @@ h3. Cascal - Cassandra Simplified
 |_. API Doc|"http://shorrockin.com/cascal/scaladocs/":http://shorrockin.com/cascal/scaladocs/|
 |_. Stable Version|1.1|
 |_. Snapshot Version|1.2-SNAPSHOT|
-|_. Scala Version|2.7.7|
+|_. Scala Version|2.8.0 RC3|
 |_. Cassandra Version|0.6.0-beta3|
 
 
