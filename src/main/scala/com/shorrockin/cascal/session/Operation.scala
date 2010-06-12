@@ -2,6 +2,7 @@ package com.shorrockin.cascal.session
 
 import org.apache.cassandra.thrift.{Deletion, Mutation}
 import com.shorrockin.cascal.model._
+import com.shorrockin.cascal.utils.Utils.now
 
 /**
  * defines an operation that can be executed in parallel with a collection
@@ -50,7 +51,7 @@ class Delete(val container:ColumnContainer[_, _], val predicate:Predicate) exten
   lazy val mutation = {
     val out = new Mutation
     val del = new Deletion
-    del.setTimestamp(System.currentTimeMillis)
+    del.setTimestamp(now)
 
     predicate match {
       case EmptyPredicate => /* do nothing */

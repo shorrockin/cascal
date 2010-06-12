@@ -5,6 +5,8 @@ import org.apache.cassandra.thrift.{ColumnPath, ColumnOrSuperColumn}
 import org.apache.cassandra.thrift.{Column => CassColumn}
 import org.apache.cassandra.thrift.{SuperColumn => CassSuperColumn}
 import com.shorrockin.cascal.utils.Conversions
+import com.shorrockin.cascal.utils.Utils.now
+
 
 /**
  * a column is the child component of a super column or a
@@ -18,8 +20,8 @@ case class Column[Owner](val name:Array[Byte],
                          val time:Long,
                          val owner:Owner) extends Gettable[Column[Owner]] {
 
-  def this(name:Array[Byte], value:Array[Byte], owner:Owner) = this(name, value, System.currentTimeMillis, owner)
-  def this(name:Array[Byte], owner:Owner) = this(name, null, System.currentTimeMillis, owner)
+  def this(name:Array[Byte], value:Array[Byte], owner:Owner) = this(name, value, now, owner)
+  def this(name:Array[Byte], owner:Owner) = this(name, null, now, owner)
   def this(name:Array[Byte], value:Array[Byte], date:Date, owner:Owner) = this(name, value, date.getTime, owner)
 
 

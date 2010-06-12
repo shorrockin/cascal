@@ -82,4 +82,22 @@ object Utils extends Logging {
       closeable.foreach { (c) => ignore(c.close()) }
     }
   }
+
+  var previousNow = System.currentTimeMillis
+
+  /**
+   * retuns the current time in milliseconds
+   */
+  def now = {
+    var rc = System.currentTimeMillis
+    // It's very possible for currentTimeMillis to return the same value
+    // repeatedly on some platforms with low timer precision.
+    Utils.synchronized {
+      if( rc <= previousNow ) {
+        rc = previousNow + 1
+      }
+      previousNow = rc
+    }
+    rc
+  }
 }

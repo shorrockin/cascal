@@ -6,9 +6,11 @@ import org.apache.cassandra.thrift.{Mutation, Cassandra, NotFoundException, Cons
 import java.util.{Map => JMap, List => JList, HashMap, ArrayList}
 
 import com.shorrockin.cascal.utils.Conversions._
+import com.shorrockin.cascal.utils.Utils.now
 
 import com.shorrockin.cascal.model._
 import org.apache.thrift.transport.{TFramedTransport, TSocket}
+import java.util.concurrent.atomic.AtomicLong
 
 /**
  * a cascal session is the entry point for interacting with the
@@ -17,6 +19,7 @@ import org.apache.thrift.transport.{TFramedTransport, TSocket}
  * @author Chris Shorrock
  */
 class Session(val host:Host, val defaultConsistency:Consistency, val framedTransport:Boolean) extends SessionTemplate {
+
   def this(host:String, port:Int, timeout:Int, defaultConsistency:Consistency, framedTransport:Boolean) = this(Host(host, port, timeout), defaultConsistency, framedTransport)
   def this(host:String, port:Int, timeout:Int, defaultConsistency:Consistency) = this(host, port, timeout, defaultConsistency, false)
   def this(host:String, port:Int, timeout:Int) = this(host, port, timeout, Consistency.One, false)
@@ -298,13 +301,6 @@ class Session(val host:Host, val defaultConsistency:Consistency, val framedTrans
    * implicitly coverts a consistency value to an int
    */
   private implicit def toThriftConsistency(c:Consistency):ConsistencyLevel = c.thriftValue
-
-
-  /**
-   * retuns the current time in milliseconds
-   */
-  private def now = System.currentTimeMillis
-
 
   /**
    * all calls which access the session should be wrapped within this method,
