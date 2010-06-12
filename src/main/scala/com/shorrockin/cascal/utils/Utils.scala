@@ -85,18 +85,22 @@ object Utils extends Logging {
 
   var previousNow = System.currentTimeMillis
 
+  var COMPENSATE_FOR_LOW_PRECISION_SYSTEM_TIME = System.getProperty("com.shorrockin.cascal.COMPENSATE_FOR_LOW_PRESCISION_SYSTEM_TIME", "true") == "true"
+
   /**
    * retuns the current time in milliseconds
    */
   def now = {
     var rc = System.currentTimeMillis
-    // It's very possible for currentTimeMillis to return the same value
-    // repeatedly on some platforms with low timer precision.
-    Utils.synchronized {
-      if( rc <= previousNow ) {
-        rc = previousNow + 1
+    if( COMPENSATE_FOR_LOW_PRECISION_SYSTEM_TIME ) {
+      // It's very possible for currentTimeMillis to return the same value
+      // repeatedly on some platforms with low timer precision.
+      Utils.synchronized {
+        if( rc <= previousNow ) {
+          rc = previousNow + 1
+        }
+        previousNow = rc
       }
-      previousNow = rc
     }
     rc
   }
