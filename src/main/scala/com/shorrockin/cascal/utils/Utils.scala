@@ -89,7 +89,7 @@ object Utils extends Logging {
 
   def currentTimeMicros = epocBaseMicros + TimeUnit.NANOSECONDS.toMicros(System.nanoTime-runBaseNanos)
 
-  var COMPENSATE_FOR_LOW_PRECISION_SYSTEM_TIME = System.getProperty("com.shorrockin.cascal.COMPENSATE_FOR_LOW_PRESCISION_SYSTEM_TIME", "true") == "true"
+  var COMPENSATE_FOR_LOW_PRECISION_SYSTEM_TIME = System.getProperty("com.shorrockin.cascal.COMPENSATE_FOR_LOW_PRESCISION_SYSTEM_TIME", "false") == "true"
 
   private var previousNow = System.currentTimeMillis
 
