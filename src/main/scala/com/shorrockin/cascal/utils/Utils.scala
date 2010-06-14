@@ -2,6 +2,7 @@ package com.shorrockin.cascal.utils
 
 import _root_.scala.io.Source
 import java.io.{FileWriter, InputStream, FileOutputStream, File}
+import java.util.concurrent.TimeUnit
 
 /**
  * common utility functions that don't fit elsewhere.
@@ -83,18 +84,25 @@ object Utils extends Logging {
     }
   }
 
-  var previousNow = System.currentTimeMillis
+  private val epocBaseMicros = TimeUnit.MILLISECONDS.toMicros(System.currentTimeMillis)
+  private val runBaseNanos = System.nanoTime
+
+  def currentTimeMicros = epocBaseMicros + TimeUnit.NANOSECONDS.toMicros(System.nanoTime-runBaseNanos)
 
   var COMPENSATE_FOR_LOW_PRECISION_SYSTEM_TIME = System.getProperty("com.shorrockin.cascal.COMPENSATE_FOR_LOW_PRESCISION_SYSTEM_TIME", "true") == "true"
 
+  private var previousNow = System.currentTimeMillis
+
   /**
-   * retuns the current time in milliseconds
+   * retuns the current time in micro seconds
    */
   def now = {
-    var rc = System.currentTimeMillis
+
+    var rc = currentTimeMicros
+
+    // It's very possible the platform can issue repetitive calls to now faster than
+    // the the platforms timer can change.
     if( COMPENSATE_FOR_LOW_PRECISION_SYSTEM_TIME ) {
-      // It's very possible for currentTimeMillis to return the same value
-      // repeatedly on some platforms with low timer precision.
       Utils.synchronized {
         if( rc <= previousNow ) {
           rc = previousNow + 1
