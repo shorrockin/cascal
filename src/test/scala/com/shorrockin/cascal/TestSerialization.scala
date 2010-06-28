@@ -16,6 +16,11 @@ case class DynamicMappedStandard(@Key val key:Long,
 @Keyspace("Test") @Family("Super") @Super
 case class MappedSuper(@Key val a:String, @SuperColumn val s:String, @Value("Column-B") val b:Date, @Value("Column-C") val c:Long)
 
+@Keyspace("Test") @Family("Super") @Super
+case class MappedSuperWithCols(@Key val a:String, @SuperColumn val s:String, @Columns(name=classOf[String], value=classOf[Long]) raw:Seq[(String, Long)]) {
+  val values = raw.map { _._1 }
+}
+
 @Keyspace("Test") @Family("Standard")
 case class MappedOptionStandard(@Optional(column="Column", as=classOf[Long]) val value:Option[Long])
 
@@ -87,12 +92,20 @@ class TestSerialization {
     val sc   = key \ "Super Column Value"
     val colb = sc \ "Column-B" \ now
     val colc = sc \ "Column-C" \ 12L
+    val cold = sc \ "Column-D" \ 13L
 
     val obj = Converter[MappedSuper](colc :: colb)
     assertEquals("Hello", obj.a)
     assertEquals("Super Column Value", obj.s)
     assertEquals(now, obj.b)
     assertEquals(12L, obj.c)    
+
+    val obj2 = Converter[MappedSuperWithCols](colc :: cold)
+    assertEquals("Hello", obj.a)
+    assertEquals("Super Column Value", obj.s)
+    assertTrue(obj2.values.contains("Column-C"));
+    assertTrue(obj2.values.contains("Column-D"));
+
   }
 
 
