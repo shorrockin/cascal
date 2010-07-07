@@ -3,6 +3,14 @@
   <ClusterName>Test Cluster</ClusterName>
 
   <Keyspaces>
+     <Keyspace Name="AuthTest">
+        <ColumnFamily Name="Standard" CompareWith="BytesType"/>
+        <ReplicaPlacementStrategy>org.apache.cassandra.locator.RackUnawareStrategy</ReplicaPlacementStrategy>
+        <ReplicationFactor>1</ReplicationFactor>
+        <EndPointSnitch>org.apache.cassandra.locator.EndPointSnitch</EndPointSnitch>
+        <Authenticator>org.apache.cassandra.auth.SimpleAuthenticator</Authenticator>
+     </Keyspace>      
+
     <Keyspace Name="Test">
         <ColumnFamily Name="Super"
                       ColumnType="Super"
@@ -39,8 +47,9 @@
        ~ and PropertyFileEndPointSnitch is available in contrib/.
       -->
       <EndPointSnitch>org.apache.cassandra.locator.EndPointSnitch</EndPointSnitch>
-
     </Keyspace>
+
+
   </Keyspaces>
 
   <!--

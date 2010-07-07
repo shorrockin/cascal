@@ -3,7 +3,7 @@ package com.shorrockin.cascal.session
 import org.apache.thrift.protocol.TBinaryProtocol
 
 import collection.jcl.Buffer
-import org.apache.cassandra.thrift.{Mutation, Cassandra, NotFoundException, ConsistencyLevel}
+import org.apache.cassandra.thrift.{AuthenticationRequest, Mutation, Cassandra, NotFoundException, ConsistencyLevel}
 import java.util.{Map => JMap, List => JList, HashMap, ArrayList}
 
 import collection.jcl.Conversions._
@@ -83,6 +83,18 @@ class Session(val host:Host, val defaultConsistency:Consistency, val framedTrans
    * returns all the keyspaces from the cassandra instance
    */
   lazy val keyspaces:Seq[String] = Buffer(client.get_string_list_property("keyspaces"))
+
+
+  /**
+   * logs into the specified keyspace using this username and password
+   */
+  def login(ks:Keyspace, user:String, pass:String) {
+    val creds:JMap[String, String] = new HashMap();
+    creds.put(user, pass);
+
+    val auth = new AuthenticationRequest(creds);
+    client.login(ks.value, auth);
+  }
 
   
   /**

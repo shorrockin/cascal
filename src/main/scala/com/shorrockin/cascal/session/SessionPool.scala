@@ -19,7 +19,8 @@ import com.shorrockin.cascal.model._
  *
  * @author Chris Shorrock
  */
-class SessionPool(val hosts:Seq[Host], val params:PoolParams, consistency:Consistency, framedTransport:Boolean) extends SessionTemplate {
+class SessionPool(val hosts:Seq[Host], val params:PoolParams, consistency:Consistency, framedTransport:Boolean, val credentials:Option[LoginCredentials]) extends SessionTemplate {
+  def this(hosts:Seq[Host], params:PoolParams, consistency:Consistency, framedTransport:Boolean) = this(hosts, params, consistency, framedTransport, None) 
   def this(hosts:Seq[Host], params:PoolParams, consistency:Consistency) = this(hosts, params, consistency, false)
   def this(hosts:Seq[Host], params:PoolParams) = this(hosts, params, Consistency.One, false)
 
@@ -132,6 +133,11 @@ class SessionPool(val hosts:Seq[Host], val params:PoolParams, consistency:Consis
           log.debug("attempting to create connection to: " + host)
           val session = new Session(host.address, host.port, host.timeout, consistency, framedTransport)
           session.open
+          if (credentials.isDefined) {
+            val c = credentials.get
+            session.login(c.keyspace, c.username, c.password)
+          }
+
           CascalStatistics.creation(host)
           session
         } catch {
@@ -164,6 +170,8 @@ class SessionPool(val hosts:Seq[Host], val params:PoolParams, consistency:Consis
   def version:String = borrow { _.version }
 
   def keyspaces:Seq[String] = borrow { _.keyspaces }
+
+  def login(ks:Keyspace, user:String, pass:String) = throw new IllegalArgumentException("when using a session template through a session pool, you should specify the login credentials as input to the pool")
 
   def get[ResultType](col:Gettable[ResultType], consistency:Consistency):Option[ResultType] = borrow { _.get(col, consistency) }
 
@@ -233,6 +241,12 @@ object ExhaustionPolicy {
   val Grow = new ExhaustionPolicy { val value = GenericObjectPool.WHEN_EXHAUSTED_GROW }
   val Block = new ExhaustionPolicy { val value = GenericObjectPool.WHEN_EXHAUSTED_BLOCK }
 }
+
+
+/**
+ * an object required to login to the system
+ */
+case class LoginCredentials(keyspace:Keyspace, username:String, password:String)
 
 
 /**

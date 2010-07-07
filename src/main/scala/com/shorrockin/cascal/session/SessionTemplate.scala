@@ -36,6 +36,12 @@ trait SessionTemplate {
 
 
   /**
+   * logs into the specified keyspace using this username and password
+   */
+  def login(ks:Keyspace, user:String, pass:String)
+
+
+  /**
    *  returns the column value for the specified column
    */
   def get[ResultType](col:Gettable[ResultType], consistency:Consistency):Option[ResultType]

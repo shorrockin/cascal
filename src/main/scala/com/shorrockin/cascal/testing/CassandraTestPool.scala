@@ -40,11 +40,15 @@ object EmbeddedTestCassandra extends Logging {
     
       val fileSep     = System.getProperty("file.separator")
       val storageFile = new File(homeDirectory, "storage-conf.xml")
+      val accessFile  = new File(homeDirectory, "access.properties")
+      val passFile    = new File(homeDirectory, "passwd.properties")
       val logFile     = new File(homeDirectory, "log4j.properties")
 
       replace(copy(resource("/storage-conf.xml"), storageFile), ("%temp-dir%" -> (homeDirectory.getCanonicalPath + fileSep)))
       copy(resource("/log4j.properties"), logFile)
 
+      System.setProperty("access.properties", accessFile.getCanonicalPath)
+      System.setProperty("passwd.properties", passFile.getCanonicalPath)
       System.setProperty("storage-config", homeDirectory.getCanonicalPath)
 
       log.debug("creating data file and log location directories")
