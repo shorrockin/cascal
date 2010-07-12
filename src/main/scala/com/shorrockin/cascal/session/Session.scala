@@ -13,7 +13,8 @@ import com.shorrockin.cascal.utils.Conversions._
 
 import com.shorrockin.cascal.model._
 import org.apache.thrift.transport.{TFramedTransport, TSocket}
-import collection.mutable.HashSet
+import collection.immutable.HashSet
+
 
 /**
  * a cascal session is the entry point for interacting with the
@@ -93,14 +94,14 @@ class Session(val host: Host, val defaultConsistency: Consistency, val framedTra
    * returns the
    */
 
-  lazy val keyspaceDescriptors: HashSet[Tuple3[String, String, String]] = {
-    var keyspaceDesc = new HashSet[Tuple3[String, String, String]]
+  lazy val keyspaceDescriptors: Set[Tuple3[String, String, String]] = {
+    var keyspaceDesc: Set[Tuple3[String, String, String]] = new HashSet[Tuple3[String, String, String]]
     client.describe_keyspaces foreach {
       space =>
         val familyMap = client.describe_keyspace(space)
         familyMap.keySet foreach {
           family =>
-            keyspaceDesc.addEntry((space, family, familyMap.get(family).get("Type")))
+            keyspaceDesc = keyspaceDesc + ((space, family, familyMap.get(family).get("Type")))
             ()
         }
     }
