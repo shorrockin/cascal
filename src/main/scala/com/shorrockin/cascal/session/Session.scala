@@ -6,13 +6,14 @@ import collection.jcl.Buffer
 import org.apache.cassandra.thrift.{Mutation, Cassandra, NotFoundException, ConsistencyLevel}
 import java.util.{Map => JMap, List => JList, HashMap, ArrayList}
 
-import java.util.concurrent.ConcurrentHashMap
+
 
 import collection.jcl.Conversions._
 import com.shorrockin.cascal.utils.Conversions._
 
 import com.shorrockin.cascal.model._
 import org.apache.thrift.transport.{TFramedTransport, TSocket}
+import collection.mutable.HashSet
 
 /**
  * a cascal session is the entry point for interacting with the
@@ -92,33 +93,30 @@ class Session(val host: Host, val defaultConsistency: Consistency, val framedTra
    * returns the
    */
 
-  lazy val keyspaceDescriptors: ConcurrentHashMap[Tuple3[String, String, String], Boolean] = getKeyspaceDescriptor
-
-  def getKeyspaceDescriptor() = {
-    var keyspaceDesc = new ConcurrentHashMap[Tuple3[String, String, String], Boolean]
+  lazy val keyspaceDescriptors: HashSet[Tuple3[String, String, String]] = {
+    var keyspaceDesc = new HashSet[Tuple3[String, String, String]]
     client.describe_keyspaces foreach {
       space =>
         val familyMap = client.describe_keyspace(space)
         familyMap.keySet foreach {
           family =>
-            keyspaceDesc.put((space, family, familyMap.get(family).get("Type")), true)
+            keyspaceDesc.addEntry((space, family, familyMap.get(family).get("Type")))
             ()
         }
-
     }
     keyspaceDesc
   }
 
   def verifyInsert[E](col: Column[E]) {
     var famType = if (col.owner.isInstanceOf[SuperColumn]) "Super" else "Standard"
-    if (!keyspaceDescriptors.containsKey(col.keyspace.value, col.family.value, famType)) {
+    if (!keyspaceDescriptors.contains(col.keyspace.value, col.family.value, famType)) {
       throw new IllegalArgumentException("Keyspace %s or ColumnFamily %s of type %s does not exist in this cassandra instance".format(col.keyspace.value, col.family.value, famType))
     }
   }
 
   def verifyRemove(container: ColumnContainer[_, _]) {
-    if (!keyspaceDescriptors.containsKey(container.keyspace.value, container.family.value, "Standard") &&
-            !keyspaceDescriptors.containsKey(container.keyspace.value, container.family.value, "Super"))
+    if (!keyspaceDescriptors.contains(container.keyspace.value, container.family.value, "Standard") &&
+            !keyspaceDescriptors.contains(container.keyspace.value, container.family.value, "Super"))
       throw new IllegalArgumentException("Keyspace %s or ColumnFamily %s does not exist in this cassandra instance".format(container.keyspace.value, container.family.value))
   }
 
