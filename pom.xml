@@ -5,7 +5,7 @@
     <groupId>com.shorrockin</groupId>
     <artifactId>cascal</artifactId>
     <packaging>jar</packaging>
-    <version>1.2-SNAPSHOT</version>
+    <version>1.2</version>
     <name>Cascal - Simple Cassandra Scala Client Library</name>
     <inceptionYear>2010</inceptionYear>
     <url>http://github.com/shorrockin/cascal</url>

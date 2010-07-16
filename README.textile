@@ -4,7 +4,7 @@ h3. Cascal - Cassandra Simplified
 |_. Home Page|"http://wiki.github.com/shorrockin/cascal/":http://wiki.github.com/shorrockin/cascal/|
 |_. API Doc|"http://shorrockin.com/cascal/scaladocs/":http://shorrockin.com/cascal/scaladocs/|
 |_. Stable Version|1.1|
-|_. Snapshot Version|1.2-SNAPSHOT|
+|_. Snapshot Version|1.2|
 |_. Scala Version|2.7.7|
 |_. Cassandra Version|0.6.1|
 
