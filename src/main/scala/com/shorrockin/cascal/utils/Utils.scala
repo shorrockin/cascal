@@ -2,6 +2,7 @@ package com.shorrockin.cascal.utils
 
 import _root_.scala.io.Source
 import java.io.{FileWriter, InputStream, FileOutputStream, File}
+import java.util.concurrent.TimeUnit
 
 /**
  * common utility functions that don't fit elsewhere.
@@ -51,7 +52,7 @@ object Utils extends Logging {
    * file in the source file.
    */
   def replace(file:File, replacements:(String, String)*):File = {
-    val contents = Source.fromFile(file).getLines.toList.map { (line) =>
+    val contents = Source.fromFile(file).getLines().toList.map { (line) =>
       var current = line
       replacements.foreach { (r) => current = current.replace(r._1, r._2) }
       current
@@ -81,5 +82,34 @@ object Utils extends Logging {
     try { f } finally {
       closeable.foreach { (c) => ignore(c.close()) }
     }
+  }
+
+  private val epocBaseMicros = TimeUnit.MILLISECONDS.toMicros(System.currentTimeMillis)
+  private val runBaseNanos = System.nanoTime
+
+  def currentTimeMicros = epocBaseMicros + TimeUnit.NANOSECONDS.toMicros(System.nanoTime-runBaseNanos)
+
+  var COMPENSATE_FOR_LOW_PRECISION_SYSTEM_TIME = System.getProperty("com.shorrockin.cascal.COMPENSATE_FOR_LOW_PRESCISION_SYSTEM_TIME", "false") == "true"
+
+  private var previousNow = System.currentTimeMillis
+
+  /**
+   * retuns the current time in micro seconds
+   */
+  def now = {
+
+    var rc = currentTimeMicros
+
+    // It's very possible the platform can issue repetitive calls to now faster than
+    // the the platforms timer can change.
+    if( COMPENSATE_FOR_LOW_PRECISION_SYSTEM_TIME ) {
+      Utils.synchronized {
+        if( rc <= previousNow ) {
+          rc = previousNow + 1
+        }
+        previousNow = rc
+      }
+    }
+    rc
   }
 }

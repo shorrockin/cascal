@@ -2,19 +2,17 @@ package com.shorrockin.cascal.session
 
 import org.apache.thrift.protocol.TBinaryProtocol
 
-import collection.jcl.Buffer
 import org.apache.cassandra.thrift.{Mutation, Cassandra, NotFoundException, ConsistencyLevel}
 import java.util.{Map => JMap, List => JList, HashMap, ArrayList}
 
-
-
-import collection.jcl.Conversions._
 import com.shorrockin.cascal.utils.Conversions._
+import com.shorrockin.cascal.utils.Utils.now
 
 import com.shorrockin.cascal.model._
 import org.apache.thrift.transport.{TFramedTransport, TSocket}
 import collection.immutable.HashSet
 
+import java.util.concurrent.atomic.AtomicLong
 
 /**
  * a cascal session is the entry point for interacting with the
@@ -22,12 +20,11 @@ import collection.immutable.HashSet
  *
  * @author Chris Shorrock
  */
-class Session(val host: Host, val defaultConsistency: Consistency, val framedTransport: Boolean) extends SessionTemplate {
-  def this(host: String, port: Int, timeout: Int, defaultConsistency: Consistency, framedTransport: Boolean) = this (Host(host, port, timeout), defaultConsistency, framedTransport)
+class Session(val host:Host, val defaultConsistency:Consistency, val framedTransport:Boolean) extends SessionTemplate {
 
-  def this(host: String, port: Int, timeout: Int, defaultConsistency: Consistency) = this (host, port, timeout, defaultConsistency, false)
-
-  def this(host: String, port: Int, timeout: Int) = this (host, port, timeout, Consistency.One, false)
+  def this(host:String, port:Int, timeout:Int, defaultConsistency:Consistency, framedTransport:Boolean) = this(Host(host, port, timeout), defaultConsistency, framedTransport)
+  def this(host:String, port:Int, timeout:Int, defaultConsistency:Consistency) = this(host, port, timeout, defaultConsistency, false)
+  def this(host:String, port:Int, timeout:Int) = this(host, port, timeout, Consistency.One, false)
 
   private val sock = {
     if (framedTransport) new TFramedTransport(new TSocket(host.address, host.port, host.timeout))
@@ -91,12 +88,11 @@ class Session(val host: Host, val defaultConsistency: Consistency, val framedTra
   lazy val keyspaces: Seq[String] = Buffer(client.get_string_list_property("keyspaces"))
 
   /**
-   * returns the
+   * returns the descriptors for all keyspaces
    */
-
   lazy val keyspaceDescriptors: Set[Tuple3[String, String, String]] = {
     var keyspaceDesc: Set[Tuple3[String, String, String]] = new HashSet[Tuple3[String, String, String]]
-    client.describe_keyspaces foreach {
+    convertSet(client.describe_keyspaces) foreach {
       space =>
         val familyMap = client.describe_keyspace(space)
         familyMap.keySet foreach {
@@ -128,6 +124,7 @@ class Session(val host: Host, val defaultConsistency: Consistency, val framedTra
       verifyRemove(op.asInstanceOf[Delete].container)
     }
   }
+
 
   /**
    *  returns the column value for the specified column
@@ -247,11 +244,10 @@ class Session(val host: Host, val defaultConsistency: Consistency, val framedTra
 
       def locate(key: String) = (containers.find {_.key.value.equals(key)}).get
 
-      results.map {
-        (tuple) =>
-          val key = locate(tuple._1)
-          val value = key.convertListResult(tuple._2)
-          (key -> value)
+      convertMap(results).map { (tuple) =>
+        val key   = locate(tuple._1)
+        val value = key.convertListResult(tuple._2)
+        (key -> value)
       }.toSeq
     } else {
       throw new IllegalArgumentException("must provide at least 1 container for a list(keys, predicate, consistency) call")
@@ -280,10 +276,9 @@ class Session(val host: Host, val defaultConsistency: Consistency, val framedTra
     val results = client.get_range_slices(family.keyspace.value, family.columnParent, predicate.slicePredicate, range.cassandraRange, consistency)
     var map = Map[Key[ColumnType, ListType], ListType]()
 
-    results.foreach {
-      (keyslice) =>
-        val key = (family \ keyslice.key)
-        map = map + (key -> key.convertListResult(keyslice.columns))
+    convertList(results).foreach { (keyslice) =>
+      val key = (family \ keyslice.key)
+      map = map + (key -> key.convertListResult(keyslice.columns))
     }
     map
   }
@@ -352,13 +347,6 @@ class Session(val host: Host, val defaultConsistency: Consistency, val framedTra
    */
   private implicit def toThriftConsistency(c: Consistency): ConsistencyLevel = c.thriftValue
 
-
-  /**
-   * retuns the current time in milliseconds
-   */
-  private def now = System.currentTimeMillis
-
-
   /**
    * all calls which access the session should be wrapped within this method,
    * it will catch any exceptions and make sure the session is then removed
@@ -370,4 +358,19 @@ class Session(val host: Host, val defaultConsistency: Consistency, val framedTra
     case t: Throwable => lastError = Some(t); throw t
   }
 
+  private def Buffer[T](v:java.util.List[T]) = {
+	 scala.collection.JavaConversions.asBuffer(v)
+  }
+
+  implicit private def convertList[T](v:java.util.List[T]):List[T] = {
+	 scala.collection.JavaConversions.asBuffer(v).toList
+  }
+
+  implicit private def convertMap[K,V](v:java.util.Map[K,V]): scala.collection.mutable.Map[K,V] = {
+	 scala.collection.JavaConversions.asMap(v)
+  }
+
+  implicit private def convertSet[T](s:java.util.Set[T]):scala.collection.mutable.Set[T] = {
+    scala.collection.JavaConversions.asSet(s)
+  }
 }

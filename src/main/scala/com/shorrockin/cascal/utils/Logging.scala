@@ -8,5 +8,5 @@ import org.apache.commons.logging.LogFactory
  * @author Chris Shorrock
  */
 trait Logging {
-  @transient @volatile lazy val log = LogFactory.getLog(this.getClass.getName)
+  lazy val log = LogFactory.getLog(this.getClass.getName)
 }
