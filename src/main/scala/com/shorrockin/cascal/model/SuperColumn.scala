@@ -1,6 +1,7 @@
 package com.shorrockin.cascal.model
 
 import org.apache.cassandra.thrift.{ColumnPath, ColumnParent, ColumnOrSuperColumn}
+import com.shorrockin.cascal.utils.Conversions
 
 /**
  * a super standard key the key who's parent is a super key. It acts in much
@@ -48,5 +49,12 @@ case class SuperColumn(val value:Array[Byte], val key:SuperKey) extends Gettable
     }
   }
 
-  override def toString = "%s \\ SuperColumn(value = %s)".format(key.toString, value)
+  private def stringIfPossible(a:Array[Byte]):String = {
+    if (a.length <= 4) return "Array (" + a.mkString(", ") + ")"
+    if (a.length > 1000) return a.toString
+    try { Conversions.string(a) } catch { case _ => a.toString }
+  }
+
+  override def toString():String = "%s \\ SuperColumn(value = %s)".format(
+      key.toString, stringIfPossible(value))
 }

@@ -71,6 +71,12 @@ case class Column[Owner](val name:Array[Byte],
     Column(col.getName, col.getValue, col.getTimestamp, owner)
   }
 
-  override def toString = "%s \\ Column(name = %s, value = %s, time = %s)".format(owner.toString, name, value, time)
+  private def stringIfPossible(a:Array[Byte]):String = {
+    if (a.length <= 4) return "Array (" + a.mkString(", ") + ")"
+    if (a.length > 1000) return a.toString
+    try { Conversions.string(a) } catch { case _ => a.toString }
+  }
 
+  override def toString():String = "%s \\ Column(name = %s, value = %s, time = %s)".format(
+      owner.toString, stringIfPossible(name), stringIfPossible(value), time)
 }
