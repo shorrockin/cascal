@@ -1,13 +1,13 @@
 package com.shorrockin.cascal.serialization
 
+import reflect.Manifest
+import java.lang.annotation.Annotation
+import java.lang.reflect.{Field, Method}
+import java.util.{Arrays, Date, UUID}
 import annotations.{Columns, Optional}
 import annotations.{Key => AKey, SuperColumn => ASuperColumn, Value => AValue}
 import annotations.{Keyspace => AKeySpace, Super => ASuper, Family => AFamily}
-import reflect.Manifest
 import com.shorrockin.cascal.model._
-import java.lang.annotation.Annotation
-import java.util.Arrays
-import java.lang.reflect.Field
 import com.shorrockin.cascal.utils.{Logging, Conversions}
 
 /**
@@ -95,6 +95,97 @@ class Converter(serializers:Map[Class[_], Serializer[_]]) {
     info.constructor.newInstance(values.toArray.asInstanceOf[Array[Object]]:_*).asInstanceOf[T]
   }
 
+  /**
+   * Given a class type, a Method that returns that type, and a source object (Cascal ORM object),
+   * return the appropriate serialized byte array. Does not support Option.
+   */
+  private def getFieldSerialized[T](fieldType:Class[_], fieldGetter:Method, obj:T):Array[Byte] = {
+    // Couldn't figure out how to case match classes on a class obj with type erasure
+    if (fieldType == classOf[String]) Conversions.bytes(fieldGetter.invoke(obj).asInstanceOf[String])
+    else if (fieldType == classOf[UUID]) Conversions.bytes(fieldGetter.invoke(obj).asInstanceOf[UUID])
+    else if (fieldType == classOf[Int]) Conversions.bytes(fieldGetter.invoke(obj).asInstanceOf[Int])
+    else if (fieldType == classOf[Long]) Conversions.bytes(fieldGetter.invoke(obj).asInstanceOf[Long])
+    else if (fieldType == classOf[Boolean]) Conversions.bytes(fieldGetter.invoke(obj).asInstanceOf[Boolean])
+    else if (fieldType == classOf[Float]) Conversions.bytes(fieldGetter.invoke(obj).asInstanceOf[Float])
+    else if (fieldType == classOf[Double]) Conversions.bytes(fieldGetter.invoke(obj).asInstanceOf[Double])
+    else if (fieldType == classOf[Date]) Conversions.bytes(fieldGetter.invoke(obj).asInstanceOf[Date])
+    else throw new IllegalStateException(
+        "Type %s of getter %s is unknown".format(fieldGetter.getName, fieldType.toString))
+  }
+
+  /**
+   * Given a Method that returns an Option, and a source object (Cascal ORM object),
+   * return null if calling the method returns None, or otherwise the appropriate
+   * serialized byte array.
+   */
+  private def getOptionFieldSerialized[T](fieldGetter:Method, obj:T):Array[Byte] = {
+    val opt = fieldGetter.invoke(obj).asInstanceOf[Option[_]]
+    opt match {
+      case None => null
+      case Some(x:String) => Conversions.bytes(x)
+      case Some(x:UUID) => Conversions.bytes(x)
+      case Some(x:Int) => Conversions.bytes(x)
+      case Some(x:Long) => Conversions.bytes(x)
+      case Some(x:Boolean) => Conversions.bytes(x)
+      case Some(x:Float) => Conversions.bytes(x)
+      case Some(x:Double) => Conversions.bytes(x)
+      case Some(x:Date) => Conversions.bytes(x)
+      case _ => throw new IllegalStateException(
+          "Type of Option %s for getter %s is unknown".format(opt.toString, fieldGetter.getName))
+    }
+  }
+
+  /**
+   * Given an object of type T using the Cascal Annotations returns a list of columns
+   * complete with name/value. Uses the serializers to convert values in columns to their
+   * appropriate byte array.
+   */ 
+  def unapply[T](obj:T)(implicit manifest:Manifest[T]):Seq[Column[_]] = {
+    val info = Converter.this.info(manifest.erasure)
+
+    val key:String = info.fieldGettersAndColumnNames.filter(tup => tup._2._2 match {
+      case a:AKey => true
+      case _ => false
+    }).head._1.invoke(obj).asInstanceOf[String]
+
+    var superCol:Array[Byte] = null
+    if (info.isSuper) {
+      val superTup = info.fieldGettersAndColumnNames.filter(tup => tup._2._2 match {
+        case a:ASuperColumn => true
+        case _ => false
+      }).head
+      val superGetter = superTup._1
+      val superType = superTup._2._1
+      superCol = getFieldSerialized(superType, superGetter, obj)
+    }
+
+    info.fieldGettersAndColumnNames.map((tup) => {
+      val fieldGetter = tup._1
+      var optField = false
+      val fieldType = tup._2._2 match {
+        case a:Optional => 
+          optField = true
+          a.as
+        case _ => tup._2._1
+      }
+      val columnName:String = tup._2._2 match {
+        case a:Optional => a.column
+        case a:AValue => a.value
+        case _ => null
+      }
+
+      val value:Array[Byte] = optField match {
+        case false => getFieldSerialized(fieldType, fieldGetter, obj)
+        case true => getOptionFieldSerialized(fieldGetter, obj)
+      }
+
+      if (columnName == null || value == null) null
+      else info.isSuper match {
+        case true => info.family.asInstanceOf[SuperColumnFamily] \ key \ superCol \ (Conversions.bytes(columnName), value)
+        case false => info.family.asInstanceOf[StandardColumnFamily] \ key \ (Conversions.bytes(columnName), value)
+      }
+    }).filter(_!=null)
+  }
 
   /**
    * returns the reflection information from the reflection cache, using
@@ -243,6 +334,12 @@ class Converter(serializers:Map[Class[_], Serializer[_]]) {
       }
       out
     }
+
+    val fieldNames = cls.getDeclaredFields.map(_.getName)
+    val fieldGetters = cls.getDeclaredMethods.filter(m=>fieldNames.contains(m.getName))
+    // Returns Seq[(getters for private field, (col type, col annotation))]
+    val fieldGettersAndColumnNames = fieldGetters.sortWith(
+        (f1, f2) => fieldNames.indexOf(f1.getName) < fieldNames.indexOf(f2.getName)).zip(parameters)
 
     /**
      * returns the field for the specified annotation class
