@@ -233,7 +233,7 @@ class Session(val host:Host, val defaultConsistency:Consistency, val framedTrans
    * same super column name (existing to separate key values), and regardless of column
    * container type - belong to the same column family. If they are not, the first key
    * in the sequence what is used in this query.<br>
-   * NOTE (to be clear): If containers is a 
+   * NOTE (to be clear): If containers is a
    */
   def list[ColumnType, ResultType](containers: Seq[ColumnContainer[ColumnType, ResultType]], predicate: Predicate, consistency: Consistency): Seq[(ColumnContainer[ColumnType, ResultType], ResultType)] = {
     if (containers.size > 0) detect {
@@ -335,12 +335,47 @@ class Session(val host:Host, val defaultConsistency:Consistency, val framedTrans
     }
   }
 
-
   /**
    * performs the list of operations in batch using the default consistency
    */
   def batch(ops: Seq[Operation]): Unit = batch(ops, defaultConsistency)
 
+
+  /**
+   * Performs the specified seq of operations in batch. Assumes all operations belong
+   * to the same keyspace. If they do not then the first keyspace in the first operation
+   * is used. Will retry in the face of a Cassandra-related timeout exception.
+   * TODO: Reforumulate where we keep splitting up the batch size into halves.
+   */
+  def batchWithRetry(ops: Seq[Operation], consistency: Consistency): Unit = timeoutTry {
+    batch(ops, consistency)
+  }
+
+
+  /**
+   * Performs the list of operations in batch using the default consistency, retrying in
+   * the face of a Cassandra-related timeout exception.
+   * TODO: Reforumulate where we keep splitting up the batch size into halves.
+   */
+  def batchWithRetry(ops: Seq[Operation]): Unit = timeoutTry { batch(ops) }
+
+
+  /**
+   * Given a code block, keep retrying it (up to maxTries) in the event of a
+   * Cassandra-related timeout exception.
+   */
+  private def timeoutTry(f: =>Unit, maxTries:Int=5):Unit = {
+    var tries = maxTries
+    assert(maxTries > 0)
+    while(tries > 0) {
+      try { f; return } catch {
+        case e:java.net.SocketTimeoutException => tries -= 1; if (tries <= 0) throw e
+        case e:java.util.concurrent.TimeoutException => tries -= 1; if (tries <= 0) throw e
+        case e:org.apache.cassandra.thrift.UnavailableException => tries -= 1; if (tries <= 0) throw e
+        case e:Exception => throw e
+      }
+    }
+  }
 
   /**
    * implicitly coverts a consistency value to an int
@@ -359,15 +394,15 @@ class Session(val host:Host, val defaultConsistency:Consistency, val framedTrans
   }
 
   private def Buffer[T](v:java.util.List[T]) = {
-	 scala.collection.JavaConversions.asBuffer(v)
+    scala.collection.JavaConversions.asBuffer(v)
   }
 
   implicit private def convertList[T](v:java.util.List[T]):List[T] = {
-	 scala.collection.JavaConversions.asBuffer(v).toList
+    scala.collection.JavaConversions.asBuffer(v).toList
   }
 
   implicit private def convertMap[K,V](v:java.util.Map[K,V]): scala.collection.mutable.Map[K,V] = {
-	 scala.collection.JavaConversions.asMap(v)
+    scala.collection.JavaConversions.asMap(v)
   }
 
   implicit private def convertSet[T](s:java.util.Set[T]):scala.collection.mutable.Set[T] = {
