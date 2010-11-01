@@ -1,6 +1,7 @@
 package com.shorrockin.cascal.utils
 
-import org.apache.commons.logging.LogFactory
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * simple logging trait to access the commons logging trait.
@@ -8,5 +9,5 @@ import org.apache.commons.logging.LogFactory
  * @author Chris Shorrock
  */
 trait Logging {
-  lazy val log = LogFactory.getLog(this.getClass.getName)
+  lazy val log = LoggerFactory.getLogger(this.getClass.getName)
 }
