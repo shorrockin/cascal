@@ -1,3 +1,7 @@
+h3 Note
+
+I am no longer actively developing Cascal due to some work changes and the non-existence of free-time at this point in my life. This is not to say I won't return to this project at some point in the future, however I can make no current commitments to quality on this. If you would like to fork and continue the project please feel free to do so. If you happen to do so, let me know and I'll link to your fork from this page. Cheers.
+
 h3. Cascal - Cassandra Simplified
 
 |_. Primary Author|Chris Shorrock|
