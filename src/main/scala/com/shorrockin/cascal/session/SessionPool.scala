@@ -159,8 +159,6 @@ class SessionPool(val hosts:Seq[Host], val params:PoolParams, consistency:Consis
 
   def clusterName:String = borrow { _.clusterName }
 
-  def configFile:String = borrow { _.configFile }
-
   def version:String = borrow { _.version }
 
   def keyspaces:Seq[String] = borrow { _.keyspaces }

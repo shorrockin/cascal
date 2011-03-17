@@ -1,5 +1,6 @@
 package com.shorrockin.cascal.session
 
+import java.nio.ByteBuffer
 import org.apache.cassandra.thrift.{SliceRange, SlicePredicate}
 import com.shorrockin.cascal.utils.Conversions
 
@@ -20,7 +21,7 @@ trait Predicate {
  *
  * @author Chris Shorrock
  */
-case class ColumnPredicate(values:Seq[Array[Byte]]) extends Predicate {
+case class ColumnPredicate(values:Seq[ByteBuffer]) extends Predicate {
   val slicePredicate = new SlicePredicate()
   slicePredicate.setColumn_names(Conversions.toJavaList(values))
 }
@@ -28,9 +29,9 @@ case class ColumnPredicate(values:Seq[Array[Byte]]) extends Predicate {
 object RangePredicate {
   def apply(limit:Int) = new RangePredicate(None, None, Order.Ascending, Some(limit))
   def apply(order:Order, limit:Int) = new RangePredicate(None, None, order, Some(limit))
-  def apply(start:Array[Byte], end:Array[Byte]) = new RangePredicate(Some(start), Some(end), Order.Ascending, None)
-  def apply(start:Array[Byte], end:Array[Byte], limit:Int) = new RangePredicate(Some(start), Some(end), Order.Ascending, Some(limit))
-  def apply(start:Option[Array[Byte]], end:Option[Array[Byte]], order:Order, limit:Option[Int]) = new RangePredicate(start, end, order, limit)
+  def apply(start:ByteBuffer, end:ByteBuffer) = new RangePredicate(Some(start), Some(end), Order.Ascending, None)
+  def apply(start:ByteBuffer, end:ByteBuffer, limit:Int) = new RangePredicate(Some(start), Some(end), Order.Ascending, Some(limit))
+  def apply(start:Option[ByteBuffer], end:Option[ByteBuffer], order:Order, limit:Option[Int]) = new RangePredicate(start, end, order, limit)
 }
 
 /**
@@ -38,10 +39,10 @@ object RangePredicate {
  *
  * @author Chris Shorrock
  */
-class RangePredicate(start:Option[Array[Byte]], end:Option[Array[Byte]], order:Order, limit:Option[Int]) extends Predicate {
-  val emptyBytes = new Array[Byte](0)
+class RangePredicate(start:Option[ByteBuffer], end:Option[ByteBuffer], order:Order, limit:Option[Int]) extends Predicate {
+  val emptyBytes = ByteBuffer.wrap(new Array[Byte](0))
 
-  def optBytesToBytes(opt:Option[Array[Byte]]) = opt match {
+  def optBytesToBytes(opt:Option[ByteBuffer]) = opt match {
     case None        => emptyBytes
     case Some(array) => array
   }

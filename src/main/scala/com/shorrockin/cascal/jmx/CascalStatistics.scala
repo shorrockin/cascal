@@ -34,7 +34,7 @@ object CascalStatistics extends CascalStatistics$MBean {
     mbeanServer.registerMBean(this, objectName)
   }
 
-  
+
   /**
    * retrieves the stats for the specified host, creating and registering them if they don't
    * exist.
@@ -60,7 +60,7 @@ object CascalStatistics extends CascalStatistics$MBean {
   }
 
   def register(pool:SessionPool)   = pools = pool :: pools
-  def unregister(pool:SessionPool) = pools = pools - pool
+  def unregister(pool:SessionPool) = pools = pools.filterNot(_ == pool)
 
   def creation(host:Host)             = get(host).creation
   def creationError(host:Host)        = get(host).creationError
@@ -94,7 +94,7 @@ class HostStatistics(host:Host) extends HostStatisticsMBean {
   def getTotalUsageTime()             = usageTime
   def getNumberOfCreationFailures()   = createFails
   def getNumberOfUsageExceptions()    = usageErrors
-  def getNumberOfSessionsCreated()    = created  
+  def getNumberOfSessionsCreated()    = created
 }
 
 trait HostStatisticsMBean {

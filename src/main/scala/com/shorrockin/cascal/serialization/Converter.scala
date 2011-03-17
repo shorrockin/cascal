@@ -1,9 +1,10 @@
 package com.shorrockin.cascal.serialization
 
+import java.nio.ByteBuffer
 import reflect.Manifest
 import java.lang.annotation.Annotation
 import java.lang.reflect.{Field, Method}
-import java.util.{Arrays, Date, UUID}
+import java.util.{Date, UUID}
 import annotations.{Columns, Optional}
 import annotations.{Key => AKey, SuperColumn => ASuperColumn, Value => AValue}
 import annotations.{Keyspace => AKeySpace, Super => ASuper, Family => AFamily}
@@ -25,7 +26,7 @@ object Converter extends Converter(Serializer.Default) with Logging {
 class Converter(serializers:Map[Class[_], Serializer[_]]) {
 
   private var reflectionCache = Map[Class[_], ReflectionInformation]()
-  
+
 
   /**
    * converts all the column sequences in the provided map (which is returned from a list
@@ -99,7 +100,7 @@ class Converter(serializers:Map[Class[_], Serializer[_]]) {
    * Given a class type, a Method that returns that type, and a source object (Cascal ORM object),
    * return the appropriate serialized byte array. Does not support Option.
    */
-  private def getFieldSerialized[T](fieldType:Class[_], fieldGetter:Method, obj:T):Array[Byte] = {
+  private def getFieldSerialized[T](fieldType:Class[_], fieldGetter:Method, obj:T):ByteBuffer = {
     // Couldn't figure out how to case match classes on a class obj with type erasure
     if (fieldType == classOf[String]) Conversions.bytes(fieldGetter.invoke(obj).asInstanceOf[String])
     else if (fieldType == classOf[UUID]) Conversions.bytes(fieldGetter.invoke(obj).asInstanceOf[UUID])
@@ -109,8 +110,7 @@ class Converter(serializers:Map[Class[_], Serializer[_]]) {
     else if (fieldType == classOf[Float]) Conversions.bytes(fieldGetter.invoke(obj).asInstanceOf[Float])
     else if (fieldType == classOf[Double]) Conversions.bytes(fieldGetter.invoke(obj).asInstanceOf[Double])
     else if (fieldType == classOf[Date]) Conversions.bytes(fieldGetter.invoke(obj).asInstanceOf[Date])
-    else throw new IllegalStateException(
-        "Type %s of getter %s is unknown".format(fieldGetter.getName, fieldType.toString))
+    else throw new IllegalStateException("Type %s of getter %s is unknown".format(fieldGetter.getName, fieldType.toString))
   }
 
   /**
@@ -118,7 +118,7 @@ class Converter(serializers:Map[Class[_], Serializer[_]]) {
    * return null if calling the method returns None, or otherwise the appropriate
    * serialized byte array.
    */
-  private def getOptionFieldSerialized[T](fieldGetter:Method, obj:T):Array[Byte] = {
+  private def getOptionFieldSerialized[T](fieldGetter:Method, obj:T):ByteBuffer = {
     val opt = fieldGetter.invoke(obj).asInstanceOf[Option[_]]
     opt match {
       case None => null
@@ -139,8 +139,8 @@ class Converter(serializers:Map[Class[_], Serializer[_]]) {
    * Given an object of type T using the Cascal Annotations returns a list of columns
    * complete with name/value. Uses the serializers to convert values in columns to their
    * appropriate byte array.
-   */ 
-  def unapply[T](obj:T)(implicit manifest:Manifest[T]):Seq[Column[_]] = {
+   */
+  def unapply[T](obj:T)(implicit manifest:Manifest[T]):List[Column[_]] = {
     val info = Converter.this.info(manifest.erasure)
 
     val key:String = info.fieldGettersAndColumnNames.filter(tup => tup._2._2 match {
@@ -148,7 +148,7 @@ class Converter(serializers:Map[Class[_], Serializer[_]]) {
       case _ => false
     }).head._1.invoke(obj).asInstanceOf[String]
 
-    var superCol:Array[Byte] = null
+    var superCol:ByteBuffer = null
     if (info.isSuper) {
       val superTup = info.fieldGettersAndColumnNames.filter(tup => tup._2._2 match {
         case a:ASuperColumn => true
@@ -159,11 +159,11 @@ class Converter(serializers:Map[Class[_], Serializer[_]]) {
       superCol = getFieldSerialized(superType, superGetter, obj)
     }
 
-    info.fieldGettersAndColumnNames.map((tup) => {
+    info.fieldGettersAndColumnNames.foldLeft(List[Column[_]]()) { (acc, tup) =>
       val fieldGetter = tup._1
       var optField = false
       val fieldType = tup._2._2 match {
-        case a:Optional => 
+        case a:Optional =>
           optField = true
           a.as
         case _ => tup._2._1
@@ -174,17 +174,17 @@ class Converter(serializers:Map[Class[_], Serializer[_]]) {
         case _ => null
       }
 
-      val value:Array[Byte] = optField match {
+      val value:ByteBuffer = optField match {
         case false => getFieldSerialized(fieldType, fieldGetter, obj)
         case true => getOptionFieldSerialized(fieldGetter, obj)
       }
 
-      if (columnName == null || value == null) null
+      if (columnName == null || value == null) acc
       else info.isSuper match {
-        case true => info.family.asInstanceOf[SuperColumnFamily] \ key \ superCol \ (Conversions.bytes(columnName), value)
-        case false => info.family.asInstanceOf[StandardColumnFamily] \ key \ (Conversions.bytes(columnName), value)
+        case true => (info.family.asInstanceOf[SuperColumnFamily] \ key \ superCol \ (Conversions.bytes(columnName), value)) :: acc
+        case false => (info.family.asInstanceOf[StandardColumnFamily] \ key \ (Conversions.bytes(columnName), value)) :: acc
       }
-    }).filter(_!=null)
+    }
   }
 
   /**
@@ -205,11 +205,11 @@ class Converter(serializers:Map[Class[_], Serializer[_]]) {
 
 
   /**
-   * returns the column with the specified name, or 
+   * returns the column with the specified name, or
    */
   private def find(name:String, columns:Seq[Column[_]]):Option[Column[_]] = {
     val nameBytes = Conversions.bytes(name)
-    columns.find { (c) => Arrays.equals(nameBytes, c.name) }
+    columns.find { (c) => nameBytes.equals(c.name) }
   }
 
 
@@ -217,7 +217,7 @@ class Converter(serializers:Map[Class[_], Serializer[_]]) {
    * converts the specified byte array to the specified type using the installed
    * serializers.
    */
-  private def bytesToObject[A](ofType:Class[A], bytes:Array[Byte]):A = {
+  private def bytesToObject[A](ofType:Class[A], bytes:ByteBuffer):A = {
     serializers.get(ofType) match {
       case None    => throw new IllegalArgumentException("unable to find serializer for type: " + ofType)
       case Some(s) =>
@@ -272,7 +272,7 @@ class Converter(serializers:Map[Class[_], Serializer[_]]) {
   case class ReflectionInformation(val cls:Class[_]) {
     val keyspace = {
       extract(cls, classOf[AKeySpace]) match {
-        case None    => throw new IllegalArgumentException("all mapped classes must contain @Keyspace annotation")
+        case None    => throw new IllegalArgumentException("all mapped classes must contain @Keyspace annotation; not found in " + cls)
         case Some(v) => Keyspace(v.value())
       }
     }
@@ -325,7 +325,7 @@ class Converter(serializers:Map[Class[_], Serializer[_]]) {
       cls.getDeclaredFields.foreach { field =>
         val annotations = field.getDeclaredAnnotations
         if (annotations.length > 0) annotations(0) match {
-          case a:AKey         => out = (field -> a) :: out 
+          case a:AKey         => out = (field -> a) :: out
           case a:Optional     => out = (field -> a) :: out
           case a:ASuperColumn => out = (field -> a) :: out
           case a:AValue       => out = (field -> a) :: out
@@ -350,7 +350,7 @@ class Converter(serializers:Map[Class[_], Serializer[_]]) {
      * returns all the fields matching the specified annotation
      */
     def fields[A <: Annotation](cls:Class[A]):Seq[(Field, Annotation)] = fields.filter { (tup) => cls.equals(tup._2.getClass) }
-    
+
     private def extract[A <: Annotation](cls:Class[_], annot:Class[A]):Option[A] = {
       val value = cls.getAnnotation(annot).asInstanceOf[A]
       if (null == value) None

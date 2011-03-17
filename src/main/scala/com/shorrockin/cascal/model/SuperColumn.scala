@@ -1,5 +1,6 @@
 package com.shorrockin.cascal.model
 
+import java.nio.ByteBuffer
 import org.apache.cassandra.thrift.{ColumnPath, ColumnParent, ColumnOrSuperColumn}
 import com.shorrockin.cascal.utils.Conversions
 
@@ -10,11 +11,11 @@ import com.shorrockin.cascal.utils.Conversions
  *
  * @author Chris Shorrock
  */
-case class SuperColumn(val value:Array[Byte], val key:SuperKey) extends Gettable[Seq[Column[SuperColumn]]]()
+case class SuperColumn(val value:ByteBuffer, val key:SuperKey) extends Gettable[Seq[Column[SuperColumn]]]()
                                                                    with StandardColumnContainer[Column[SuperColumn], Seq[Column[SuperColumn]]] {
-  def \(name:Array[Byte]) = new Column(name, this)
-  def \(name:Array[Byte], value:Array[Byte]) = new Column(name, value, this)
-  def \(name:Array[Byte], value:Array[Byte], time:Long) = new Column(name, value, time, this)
+  def \(name:ByteBuffer) = new Column(name, this)
+  def \(name:ByteBuffer, value:ByteBuffer) = new Column(name, value, this)
+  def \(name:ByteBuffer, value:ByteBuffer, time:Long) = new Column(name, value, time, this)
 
   val family = key.family
   val keyspace = family.keyspace
@@ -22,7 +23,7 @@ case class SuperColumn(val value:Array[Byte], val key:SuperKey) extends Gettable
   lazy val columnParent = new ColumnParent(family.value).setSuper_column(value)
   lazy val columnPath = new ColumnPath(family.value).setSuper_column(value)
 
-  def ::(other:SuperColumn):List[SuperColumn] = other :: this :: Nil  
+  def ::(other:SuperColumn):List[SuperColumn] = other :: this :: Nil
 
   private def convertList[T](v:java.util.List[T]):List[T] = {
 	 scala.collection.JavaConversions.asBuffer(v).toList
@@ -34,7 +35,7 @@ case class SuperColumn(val value:Array[Byte], val key:SuperKey) extends Gettable
    */
   def convertGetResult(colOrSuperCol:ColumnOrSuperColumn):Seq[Column[SuperColumn]] = {
     val superCol = colOrSuperCol.getSuper_column
-    convertList(superCol.getColumns).map { (column) => \(column.getName, column.getValue, column.getTimestamp) }
+    convertList(superCol.getColumns).map { (column) => \(ByteBuffer.wrap(column.getName), ByteBuffer.wrap(column.getValue), column.getTimestamp) }
   }
 
 
@@ -45,14 +46,14 @@ case class SuperColumn(val value:Array[Byte], val key:SuperKey) extends Gettable
   def convertListResult(results:Seq[ColumnOrSuperColumn]):Seq[Column[SuperColumn]] = {
     results.map { (result) =>
       val column = result.getColumn
-      \(column.getName, column.getValue, column.getTimestamp)
+      \(ByteBuffer.wrap(column.getName), ByteBuffer.wrap(column.getValue), column.getTimestamp)
     }
   }
 
-  private def stringIfPossible(a:Array[Byte]):String = {
-    if (a.length <= 4) return "Array (" + a.mkString(", ") + ")"
-    if (a.length > 1000) return a.toString
-    try { Conversions.string(a) } catch { case _ => a.toString }
+  private def stringIfPossible(a:ByteBuffer):String = {
+    if (a.array.length <= 4) return "Array (" + a.array.mkString(", ") + ")"
+    if (a.array.length > 1000) return a.array.toString
+    try { Conversions.string(a) } catch { case _ => a.array.toString }
   }
 
   override def toString():String = "%s \\ SuperColumn(value = %s)".format(

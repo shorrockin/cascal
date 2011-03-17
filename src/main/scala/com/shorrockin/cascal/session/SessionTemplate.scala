@@ -10,17 +10,11 @@ import com.shorrockin.cascal.model._
  * @author Chris Shorrock
  */
 trait SessionTemplate {
-  
+
   /**
    * return the current cluster name of the cassandra instance
    */
   def clusterName:String
-
-
-  /**
-   * returns the configuration file of the connected cassandra instance
-   */
-  def configFile:String
 
 
   /**

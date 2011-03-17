@@ -1,5 +1,6 @@
 package com.shorrockin.cascal.model
 
+import java.nio.ByteBuffer
 import org.apache.cassandra.thrift.{ColumnParent, ColumnPath, ColumnOrSuperColumn}
 
 /**
@@ -13,7 +14,7 @@ import org.apache.cassandra.thrift.{ColumnParent, ColumnPath, ColumnOrSuperColum
  * @param ListType when listed, what type of object does it return.
  */
 trait ColumnContainer[ColumnType, ListType] {
-  def \(value:Array[Byte]):ColumnType
+  def \(value:ByteBuffer):ColumnType
 
   val family:ColumnFamily[_]
   val key:Key[_, _]
