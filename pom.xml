@@ -133,13 +133,13 @@
 
     <repositories>
         <repository>
-            <id>scala-tools.org</id>
+            <id>scala-tools.org-snapshots</id>
             <name>Scala-Tools Maven2 Repository</name>
             <url>http://scala-tools.org/repo-snapshots/</url>
         </repository>
 
         <repository>
-            <id>scala-tools.org</id>
+            <id>scala-tools.org-releases</id>
             <name>Scala-Tools Maven2 Repository</name>
             <url>http://scala-tools.org/repo-releases/</url>
         </repository>
@@ -187,18 +187,14 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
             <version>1.5.8</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>jcl-over-slf4j</artifactId>
-            <version>1.5.8</version>
+            <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>log4j</groupId>
             <artifactId>log4j</artifactId>
             <version>1.2.14</version>
+            <optional>true</optional>
         </dependency>
 
         <dependency>
