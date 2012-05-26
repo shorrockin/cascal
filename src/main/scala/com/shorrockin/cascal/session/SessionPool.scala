@@ -60,7 +60,7 @@ class SessionPool(val hosts:Seq[Host], val params:PoolParams, consistency:Consis
 
 
   /**
-   * returns the number of active session connections. 
+   * returns the number of active session connections.
    */
   def active = pool.getNumActive
 
@@ -99,7 +99,7 @@ class SessionPool(val hosts:Seq[Host], val params:PoolParams, consistency:Consis
   /**
    * retrieves a session. Once the caller has finished with the
    * session it must be returned to the pool. failure to do so
-   * will result your pool shedding a tear. 
+   * will result your pool shedding a tear.
    */
   def checkout:Session = pool.borrowObject.asInstanceOf[Session]
 
@@ -159,8 +159,6 @@ class SessionPool(val hosts:Seq[Host], val params:PoolParams, consistency:Consis
 
   def clusterName:String = borrow { _.clusterName }
 
-  def configFile:String = borrow { _.configFile }
-
   def version:String = borrow { _.version }
 
   def keyspaces:Seq[String] = borrow { _.keyspaces }
@@ -206,6 +204,10 @@ class SessionPool(val hosts:Seq[Host], val params:PoolParams, consistency:Consis
   def batch(ops:Seq[Operation], consistency:Consistency):Unit = borrow { _.batch(ops, consistency) }
 
   def batch(ops:Seq[Operation]):Unit = borrow { _.batch(ops) }
+
+  def batchWithRetry(ops: Seq[Operation], consistency: Consistency): Unit = borrow { _.batchWithRetry(ops, consistency) }
+
+  def batchWithRetry(ops: Seq[Operation]): Unit = borrow { _.batchWithRetry(ops) }
 }
 
 

@@ -8,14 +8,6 @@ import org.apache.cassandra.thrift.ConsistencyLevel
  * @author Chris Shorrock
  */
 object Consistency {
-
-  /**
-   * WRITE: Ensure nothing. A write happens asynchronously in background
-   *
-   * READ: Not supported, because it doesn't make sense
-   */
-  val Zero = new Consistency { def thriftValue = ConsistencyLevel.ZERO }
-
   /**
    * WRITE: Ensure that the write has been written to at least 1 node,
    * including hinted recipients.

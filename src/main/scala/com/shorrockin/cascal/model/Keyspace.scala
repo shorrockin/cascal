@@ -1,4 +1,5 @@
 package com.shorrockin.cascal.model
+import java.nio.ByteBuffer
 
 /**
  * provides the high level abstraction for the keyspace. can be thought

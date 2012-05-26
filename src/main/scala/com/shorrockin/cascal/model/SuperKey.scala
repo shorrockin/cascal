@@ -1,10 +1,11 @@
 package com.shorrockin.cascal.model
 
 import org.apache.cassandra.thrift.{ColumnOrSuperColumn}
+import java.nio.ByteBuffer
 
 case class SuperKey(val value:String, val family:SuperColumnFamily) extends Key[SuperColumn, Seq[(SuperColumn, Seq[Column[SuperColumn]])]] {
 
-  def \(value:Array[Byte]) = new SuperColumn(value, this)
+  def \(value:ByteBuffer) = new SuperColumn(value, this)
 
   /**
    *  converts a list of super columns to the specified return type
@@ -12,9 +13,9 @@ case class SuperKey(val value:String, val family:SuperColumnFamily) extends Key[
   def convertListResult(results:Seq[ColumnOrSuperColumn]):Seq[(SuperColumn, Seq[Column[SuperColumn]])] = {
     results.map { (result) =>
       val nativeSuperCol = result.getSuper_column
-      val superColumn    = this \ nativeSuperCol.getName
+      val superColumn    = this \ ByteBuffer.wrap(nativeSuperCol.getName)
       val columns = convertList(nativeSuperCol.getColumns).map { (column) =>
-        superColumn \ (column.getName, column.getValue, column.getTimestamp)
+        superColumn \ (ByteBuffer.wrap(column.getName), ByteBuffer.wrap(column.getValue), column.getTimestamp)
       }
       (superColumn -> columns)
     }

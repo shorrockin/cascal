@@ -1,3 +1,5 @@
+// TODO Need to update this for Cassandra 0.7
+
 package com.shorrockin.cascal.testing
 
 import org.apache.cassandra.thrift.CassandraDaemon
@@ -37,7 +39,7 @@ object EmbeddedTestCassandra extends Logging {
 
       log.debug("creating cassandra instance at: " + homeDirectory.getCanonicalPath)
       log.debug("copying cassandra configuration files to root directory")
-    
+
       val fileSep     = System.getProperty("file.separator")
       val storageFile = new File(homeDirectory, "storage-conf.xml")
       val logFile     = new File(homeDirectory, "log4j.properties")
@@ -49,7 +51,7 @@ object EmbeddedTestCassandra extends Logging {
 
       log.debug("creating data file and log location directories")
       DatabaseDescriptor.getAllDataFileLocations.foreach { (file) => new File(file).mkdirs }
-      new File(DatabaseDescriptor.getLogFileLocation).mkdirs
+      // new File(DatabaseDescriptor.getLogFileLocation).mkdirs
 
       val daemon = new CassandraDaemonThread
       daemon.start

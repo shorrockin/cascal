@@ -1,5 +1,6 @@
 package com.shorrockin.cascal.model
 
+import java.nio.ByteBuffer
 import org.apache.cassandra.thrift.{ColumnOrSuperColumn}
 
 /**
@@ -12,14 +13,14 @@ import org.apache.cassandra.thrift.{ColumnOrSuperColumn}
 case class StandardKey(val value:String, val family:StandardColumnFamily) extends Key[Column[StandardKey], Seq[Column[StandardKey]]]
                                                                              with StandardColumnContainer[Column[StandardKey], Seq[Column[StandardKey]]] {
 
-  def \(name:Array[Byte]) = new Column(name, this)
-  def \(name:Array[Byte], value:Array[Byte]) = new Column(name, value, this)
-  def \(name:Array[Byte], value:Array[Byte], time:Long) = new Column(name, value, time, this)
+  def \(name:ByteBuffer) = new Column(name, this)
+  def \(name:ByteBuffer, value:ByteBuffer) = new Column(name, value, this)
+  def \(name:ByteBuffer, value:ByteBuffer, time:Long) = new Column(name, value, time, this)
 
   def convertListResult(results:Seq[ColumnOrSuperColumn]):Seq[Column[StandardKey]] = {
     results.map { (result) =>
       val column = result.getColumn
-      \(column.getName, column.getValue, column.getTimestamp)
+      \(ByteBuffer.wrap(column.getName), ByteBuffer.wrap(column.getValue), column.getTimestamp)
     }
   }
 

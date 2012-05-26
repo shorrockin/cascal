@@ -1,6 +1,7 @@
 package com.shorrockin.cascal.session
 
 import org.apache.cassandra.thrift.{KeyRange => CassKeyRange}
+import java.nio.charset.Charset
 
 /**
  * a key range is used when you list by keys to specified the start and end
@@ -10,11 +11,19 @@ import org.apache.cassandra.thrift.{KeyRange => CassKeyRange}
  *
  * @author Chris Shorrock
  */
-case class KeyRange(start:String, end:String, limit:Int) {
+object KeyRange {
+  val utf8 = Charset.forName("UTF-8")
+}
+
+trait CassandraKeyRange {
+  lazy val cassandraRange:CassKeyRange = null
+}
+
+case class KeyRange(start:String, end:String, limit:Int) extends CassKeyRange {
   lazy val cassandraRange = {
     val range = new CassKeyRange(limit)
-    range.setStart_key(start)
-    range.setEnd_key(end)
+    range.setStart_key(KeyRange.utf8.encode(start))
+    range.setEnd_key(KeyRange.utf8.encode(end))
     range
   }
 }
@@ -28,11 +37,11 @@ case class KeyRange(start:String, end:String, limit:Int) {
  *
  * @author Chris Shorrock
  */
-case class TokenRange(tokenStart:String, tokenEnd:String, tokenLimit:Int) extends KeyRange(tokenStart, tokenEnd, tokenLimit) {
+case class TokenRange(tokenStart:String, tokenEnd:String, tokenLimit:Int) extends CassandraKeyRange {
   override lazy val cassandraRange = {
-    val range = new CassKeyRange(limit)
-    range.setStart_token(start)
-    range.setEnd_token(end)
+    val range = new CassKeyRange(tokenLimit)
+    range.setStart_token(tokenStart)
+    range.setEnd_token(tokenEnd)
     range
   }
 }
